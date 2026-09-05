@@ -1,0 +1,2479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RecoverAI — AI Revenue Recovery & Decision Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ivory:#F9F4EE; --ivory-deep:#F1E8DD; --card:#FFFEFC;
+    --charcoal:#1B1712; --ink-soft:#6E6558;
+    --wine:#7C2436; --wine-deep:#57192A; --wine-soft:#F1DEE1;
+    --blush:#D9A9A0; --blush-soft:#F6E8E3;
+    --lavender:#C9CEEA; --lavender-soft:#EEEFF8;
+    --sage:#4B6A52; --sage-soft:#E2E9DF;
+    --amber:#A17A2E; --amber-soft:#F1E5CC;
+    --gold:#C9973F; --gold-soft:#F3E6C9;
+    --plum:#6B4166; --plum-soft:#EFE1EE;
+    --line: rgba(27,23,18,0.11);
+    --glass-bg: rgba(255,255,255,0.52);
+    --glass-strong: rgba(255,255,255,0.80);
+    --glass-border: rgba(255,255,255,0.72);
+    --glass-shadow: 0 30px 70px -26px rgba(20,12,26,0.45), 0 2px 14px rgba(20,12,26,0.18), inset 0 1px 0 rgba(255,255,255,0.6);
+    --glass-shadow-sm: 0 16px 40px -18px rgba(20,12,26,0.4), inset 0 1px 0 rgba(255,255,255,0.55);
+    --onlight:#1B1712;
+    --ondark:#F8F1E6; --ondark-soft:rgba(248,241,230,.72); --ondark-accent:#E7B970;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(900px 640px at 12% -6%, rgba(122,66,90,.55), transparent 60%),
+      radial-gradient(760px 560px at 96% 4%, rgba(84,74,112,.5), transparent 62%),
+      radial-gradient(1000px 700px at 50% 112%, rgba(168,98,84,.55), transparent 60%),
+      linear-gradient(178deg, #241A2C 0%, #33223A 34%, #4A2E42 62%, #6B3E45 100%);
+    background-attachment:fixed;
+    color:var(--ondark); font-family:'Work Sans',sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased; position:relative;
+  }
+  .serif{font-family:'Fraunces',serif;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:inherit; text-decoration:none;}
+  button{font-family:inherit; cursor:pointer; border:none; background:none;}
+  .view{display:none;}
+  .view.active{display:block;}
+  ::selection{background:var(--wine-soft); color:var(--wine-deep);}
+  .card, .glass, .glass-strong{ color:var(--onlight); }
+
+  /* ---------- atmospheric twilight background ---------- */
+  #orbs{position:fixed; inset:0; z-index:-2; overflow:hidden; pointer-events:none;}
+  .orb{position:absolute; border-radius:50%; filter:blur(100px); opacity:.7;}
+  .orb-1{width:640px; height:640px; top:-220px; left:-160px; background:radial-gradient(circle, var(--wine-soft), transparent 70%);}
+  .orb-2{width:700px; height:700px; top:-80px; right:-260px; background:radial-gradient(circle, var(--lavender-soft), transparent 70%);}
+  .orb-3{width:580px; height:580px; bottom:-240px; left:24%; background:radial-gradient(circle, var(--blush-soft), transparent 70%);}
+  .orb-4{width:440px; height:440px; top:200px; left:36%; background:radial-gradient(circle, var(--gold-soft), transparent 72%); opacity:.5;}
+  .orb-5{width:500px; height:500px; bottom:60px; right:6%; background:radial-gradient(circle, var(--plum-soft), transparent 72%); opacity:.5;}
+  .particle{position:absolute; border-radius:50%; background:var(--gold-soft); opacity:.5; animation:floaty 9s ease-in-out infinite;}
+  @keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-18px);}}
+  #grain{position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.05; mix-blend-mode:overlay;
+    background-image:radial-gradient(circle at 1px 1px, #fff 1px, transparent 0);
+    background-size:3px 3px;}
+  #sparkles{position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none;}
+  .spk{position:absolute; color:var(--gold-soft); opacity:0; animation:spkTwinkle 5.5s ease-in-out infinite;}
+  .spk svg{width:100%; height:100%; display:block;}
+  @keyframes spkTwinkle{0%,100%{opacity:0; transform:scale(.5) rotate(0deg);}45%{opacity:.85; transform:scale(1) rotate(20deg);}55%{opacity:.85;}}
+
+  /* ---------- shared ---------- */
+  .wrap{max-width:1180px; margin:0 auto; padding:0 32px;}
+  .btn{display:inline-flex; align-items:center; gap:8px; padding:14px 26px; border-radius:99px; font-weight:600; font-size:14.5px; transition:all .22s cubic-bezier(.4,0,.2,1); position:relative; overflow:hidden;}
+  .btn-primary{background:linear-gradient(155deg, var(--wine) 0%, var(--wine-deep) 100%); color:var(--ivory); box-shadow:0 14px 30px -12px rgba(20,12,26,.6), inset 0 1px 0 rgba(255,255,255,.25);}
+  .btn-primary::after{content:''; position:absolute; inset:0; border-radius:inherit; background:linear-gradient(160deg, rgba(255,255,255,.32), transparent 45%); pointer-events:none;}
+  .btn-primary:hover{transform:translateY(-2px) scale(1.02); box-shadow:0 18px 38px -12px rgba(20,12,26,.65), inset 0 1px 0 rgba(255,255,255,.3);}
+  .btn-ghost{border:1.5px solid var(--glass-border); color:var(--onlight); background:var(--glass-strong); backdrop-filter:blur(14px); box-shadow:inset 0 1px 0 rgba(255,255,255,.6);}
+  .btn-ghost:hover{border-color:var(--wine); transform:translateY(-2px);}
+  .pill{display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:99px; font-size:12.5px; font-weight:600; letter-spacing:.02em;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:22px; box-shadow:0 1px 2px rgba(27,23,18,.04), 0 10px 28px -16px rgba(27,23,18,.14); transition:transform .25s ease, box-shadow .25s ease;}
+  .dot{width:6px; height:6px; border-radius:50%; display:inline-block;}
+
+  /* ---------- bubble-glass system ---------- */
+  .glass{background:var(--glass-bg); backdrop-filter:blur(30px) saturate(180%); -webkit-backdrop-filter:blur(30px) saturate(180%); border:1px solid var(--glass-border); box-shadow:var(--glass-shadow), 0 0 0 1px rgba(124,36,54,.05); border-radius:28px; position:relative; overflow:hidden;}
+  .glass::before{content:''; position:absolute; inset:0; border-radius:inherit; padding:1px; background:linear-gradient(155deg, rgba(255,255,255,.9), rgba(255,255,255,0) 30%, rgba(255,255,255,0) 68%, rgba(217,169,160,.5)); -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none; z-index:2;}
+  .glass::after{content:''; position:absolute; width:60%; height:46%; top:-14%; left:-10%; border-radius:50%; background:radial-gradient(circle at 35% 35%, rgba(255,255,255,.75), rgba(255,255,255,0) 68%); pointer-events:none; z-index:1; opacity:.8;}
+  .glass-strong{background:var(--glass-strong); backdrop-filter:blur(28px) saturate(180%); -webkit-backdrop-filter:blur(28px) saturate(180%); border:1px solid var(--glass-border); box-shadow:var(--glass-shadow-sm), 0 0 0 1px rgba(124,36,54,.04); border-radius:22px; position:relative; overflow:hidden;}
+  .glass-strong::after{content:''; position:absolute; width:46%; height:38%; top:-10%; left:-8%; border-radius:50%; background:radial-gradient(circle at 35% 35%, rgba(255,255,255,.6), rgba(255,255,255,0) 70%); pointer-events:none; opacity:.7;}
+  .glass-hover{transition:transform .28s cubic-bezier(.4,0,.2,1), box-shadow .28s ease;}
+  .glass-hover:hover{transform:translateY(-5px); box-shadow:0 34px 76px -26px rgba(20,12,26,.5), inset 0 1px 0 rgba(255,255,255,.6);}
+
+  /* ---------- landing nav ---------- */
+  .lnav{position:sticky; top:0; z-index:50; background:rgba(250,246,239,.86); backdrop-filter:blur(24px) saturate(170%); -webkit-backdrop-filter:blur(24px) saturate(170%); border-bottom:1px solid rgba(255,255,255,.5); box-shadow:0 1px 0 rgba(124,36,54,.06), 0 12px 32px -20px rgba(20,12,26,.35); color:var(--onlight);}
+  .lnav-inner{display:flex; align-items:center; justify-content:space-between; padding:16px 32px; max-width:1180px; margin:0 auto;}
+  .logo{display:flex; align-items:center; gap:9px; font-size:19px; font-weight:600;}
+  .logo-mark{width:26px; height:26px; border-radius:50%; background:linear-gradient(150deg, var(--wine-deep), var(--wine)); position:relative; flex-shrink:0; box-shadow:0 4px 12px -4px rgba(87,25,42,.5), inset 0 1px 0 rgba(255,255,255,.35);}
+  .logo-mark::after{content:''; position:absolute; inset:7px; border-radius:50%; background:var(--blush);}
+  .lnav-links{display:flex; gap:32px; font-size:14.5px; font-weight:500; color:var(--ink-soft);}
+  .lnav-links a:hover{color:var(--wine-deep);}
+  .lnav-cta{display:flex; align-items:center; gap:14px;}
+
+  /* ---------- hero ---------- */
+  .hero{padding:56px 0 32px; text-align:center; position:relative; overflow:hidden;}
+  .eyebrow{display:inline-flex; align-items:center; gap:8px; padding:7px 14px; border-radius:99px; font-size:13px; font-weight:600; color:var(--ink-soft); margin-bottom:24px;}
+  .eyebrow .dot{background:var(--sage); box-shadow:0 0 0 4px var(--sage-soft);}
+  h1.hero-h{font-size:clamp(38px,5.4vw,70px); font-weight:600; line-height:1.06; letter-spacing:-.02em; max-width:920px; margin:0 auto; color:var(--ondark);}
+  h1.hero-h em{font-style:italic; color:var(--ondark-accent); font-weight:500;}
+  .hero-sub{max-width:620px; margin:22px auto 34px; font-size:17.5px; color:var(--ondark-soft); line-height:1.6;}
+  .hero-ctas{display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom:46px;}
+
+  /* ---------- Live Recovery Agent floating panel + orbiting KPI chips ---------- */
+  .hero-stage{position:relative; max-width:920px; margin:0 auto; padding:34px 0 10px;}
+  .agent-viz{max-width:700px; margin:0 auto; padding:0; text-align:left; position:relative; z-index:2;}
+  .agent-panel{padding:32px 36px 30px;}
+  .agent-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;}
+  .agent-brand{display:flex; align-items:center; gap:9px;}
+  .agent-brand-dot{width:8px; height:8px; border-radius:50%; background:var(--sage); box-shadow:0 0 0 4px var(--sage-soft); animation:agentBlink 1.8s infinite;}
+  @keyframes agentBlink{0%,100%{opacity:1;}50%{opacity:.4;}}
+  .agent-brand b{font-size:12.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;}
+  .agent-brand span{display:block; font-size:11.5px; color:var(--ink-soft); font-weight:500; margin-top:1px;}
+  .agent-live{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--sage); background:var(--sage-soft); padding:4px 10px; border-radius:99px;}
+
+  .kpi-chip{position:absolute; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; width:118px; height:118px; border-radius:50%; text-align:center; padding:14px; animation:chipFloat 7s ease-in-out infinite;}
+  .kpi-chip .chip-ic{width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; margin-bottom:4px;}
+  .kpi-chip b{display:block; font-family:'IBM Plex Mono',monospace; font-size:16px; font-weight:600; line-height:1.1;}
+  .kpi-chip span{display:block; font-size:9.5px; color:var(--ink-soft); font-weight:600; line-height:1.3; margin-top:2px;}
+  .chip-risk{top:0%; left:-6%; animation-delay:0s;}
+  .chip-rate{top:54%; right:-8%; animation-delay:2.3s;}
+  .chip-incr{bottom:-8%; left:10%; animation-delay:4.6s;}
+  @keyframes chipFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+  @media (max-width:1040px){
+    .kpi-chip{position:static; animation:none; display:inline-flex; margin:6px 6px 0; width:104px; height:104px;}
+    .hero-stage{padding-top:10px;}
+  }
+
+  .agent-alert{display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:13px; background:var(--wine-soft); margin-bottom:16px; transition:background .5s ease;}
+  .agent-alert.ok{background:var(--sage-soft);}
+  .agent-alert-dot{width:8px; height:8px; border-radius:50%; background:var(--wine); flex-shrink:0; animation:agentBlink 1.3s infinite;}
+  .agent-alert.ok .agent-alert-dot{background:var(--sage); animation:none;}
+  .agent-alert-txt{font-size:13.5px; font-weight:600;}
+  .agent-alert-txt span{display:block; font-size:11.5px; font-weight:500; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; margin-top:1px;}
+
+  .agent-gauge-row{display:flex; align-items:center; gap:16px; padding:16px 4px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin-bottom:16px;}
+  .agent-gauge-num{font-family:'IBM Plex Mono',monospace; font-size:30px; font-weight:600; color:var(--wine-deep); line-height:1;}
+  .agent-gauge-num.recovered{color:var(--sage);}
+  .agent-gauge-cap{font-size:11.5px; color:var(--ink-soft); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-top:3px;}
+  .agent-gauge-bar{flex:1; height:6px; border-radius:99px; background:var(--ivory-deep); overflow:hidden;}
+  .agent-gauge-fill{height:100%; border-radius:99px; background:linear-gradient(90deg, var(--wine), var(--blush)); width:0%; transition:width 1.1s cubic-bezier(.4,0,.2,1);}
+
+  .agent-flow{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:11.5px; font-weight:600; color:var(--ink-soft); margin-bottom:4px;}
+  .agent-flow span{padding:5px 10px; border-radius:8px; background:var(--ivory-deep); transition:all .35s ease;}
+  .agent-flow span.on{background:var(--wine-deep); color:var(--ivory);}
+  .agent-flow span.done{background:var(--sage-soft); color:var(--sage);}
+  .agent-flow .arrow{padding:0; background:none; color:var(--line); font-size:12px;}
+
+  .agent-final{text-align:center; padding:6px 0 2px; opacity:0; max-height:0; overflow:hidden; transition:opacity .4s ease, max-height .4s ease, padding .4s ease;}
+  .agent-final.show{opacity:1; max-height:70px; padding:14px 0 2px;}
+  .agent-final b{font-family:'Fraunces',serif; font-size:26px; color:var(--sage); position:relative; display:inline-block;}
+  .agent-final b.burst::after{content:''; position:absolute; inset:-14px; border-radius:99px; border:1.5px solid var(--sage); opacity:0; animation:burst .7s ease-out;}
+  @keyframes burst{0%{opacity:.7; transform:scale(.7);}100%{opacity:0; transform:scale(1.6);}}
+
+  /* ---------- metrics strip ---------- */
+  .metrics{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin:70px 0;}
+  .metric{padding:24px 20px; text-align:center;}
+  .metric b{display:block; font-family:'Fraunces',serif; font-size:29px; font-weight:600; margin-bottom:4px; color:var(--wine-deep);}
+  .metric span{font-size:12.5px; color:var(--ink-soft); font-weight:500;}
+  .metric-spark{display:block; margin:12px auto 0;}
+
+  /* ---------- section heads ---------- */
+  .section{padding:64px 0;}
+  .sec-head{max-width:600px; margin-bottom:44px;}
+  .sec-eyebrow{font-size:12.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ondark-accent); margin-bottom:12px;}
+  .sec-eyebrow::before{content:'✧'; margin-right:6px; color:var(--gold-soft);}
+  .sec-title{font-family:'Fraunces',serif; font-size:34px; font-weight:600; letter-spacing:-.01em; margin-bottom:12px; color:var(--ondark);}
+  .sec-sub{color:var(--ondark-soft); font-size:15.5px; line-height:1.6;}
+  .center{text-align:center; margin-left:auto; margin-right:auto;}
+  /* card-nested sec-head (e.g. inside the guardrail glass panel) must stay on-light */
+  .gr-panel .sec-eyebrow{color:var(--wine);}
+  .gr-panel .sec-eyebrow::before{color:var(--gold);}
+  .gr-panel .sec-title{color:var(--onlight);}
+  .gr-panel .sec-sub{color:var(--ink-soft);}
+
+  /* workflow loop (also reused in dashboard) */
+  .loop{display:flex; align-items:flex-start; gap:0; overflow-x:auto; padding:8px 0 20px; position:relative;}
+  .loop-step{flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:10px; width:112px; text-align:center;}
+  .loop-num{width:42px; height:42px; border-radius:50%; border:1.5px solid var(--line); background:var(--card); display:flex; align-items:center; justify-content:center; color:var(--ink-soft); transition:all .35s ease; box-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 4px 10px -6px rgba(27,23,18,.15);}
+  .loop-num svg{width:17px; height:17px;}
+  .loop-step.active .loop-num{border-color:var(--wine); color:var(--wine); background:var(--wine-soft); box-shadow:0 0 0 5px var(--wine-soft); animation:agentBreathe 1.6s ease-in-out infinite;}
+  @keyframes agentBreathe{0%,100%{box-shadow:0 0 0 5px var(--wine-soft);}50%{box-shadow:0 0 0 8px var(--wine-soft);}}
+  .loop-step.done .loop-num{border-color:var(--sage); color:var(--sage); background:var(--sage-soft);}
+  .loop-name{font-size:12.5px; font-weight:600; color:var(--ink-soft); transition:color .3s;}
+  .loop-step.active .loop-name, .loop-step.done .loop-name{color:var(--charcoal);}
+  .loop-line{flex:0 0 26px; height:1.5px; background:var(--line); margin-top:20px;}
+  /* on landing, the loop sits bare on the twilight canvas, not inside a card */
+  #view-landing .loop-name{color:var(--ondark-soft);}
+  #view-landing .loop-step.active .loop-name, #view-landing .loop-step.done .loop-name{color:var(--ondark);}
+
+  /* feature grid */
+  .grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:18px;}
+  .feat{padding:26px 22px; text-align:left;}
+  .feat:hover{transform:translateY(-3px); box-shadow:0 20px 40px -20px rgba(87,25,42,.2);}
+  .feat-ic{width:38px; height:38px; border-radius:11px; background:var(--wine-soft); color:var(--wine-deep); display:flex; align-items:center; justify-content:center; margin-bottom:16px; font-size:17px;}
+  .feat h4{font-size:15.5px; font-weight:600; margin-bottom:8px;}
+  .feat p{font-size:13.5px; color:var(--ink-soft); line-height:1.55;}
+
+  /* guardrail showcase */
+  .guardrail-box{display:grid; grid-template-columns:1fr 1fr; gap:0; overflow:hidden;}
+  .gr-panel{padding:38px;}
+  .gr-example{padding:22px; border-radius:16px; margin-top:8px;}
+  .gr-row{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px dashed var(--line); font-size:14px;}
+  .gr-row:last-child{border-bottom:none;}
+  .gr-row span:first-child{color:var(--ink-soft);}
+  .gr-row span:last-child{font-weight:600; font-family:'IBM Plex Mono',monospace;}
+  .gr-verdict{margin-top:14px; padding:12px 14px; background:var(--amber-soft); border-radius:11px; font-size:13px; color:#6B4E1B; font-weight:500;}
+
+  /* simulator preview table */
+  .sim-table{width:100%; border-collapse:collapse; font-size:14px;}
+  .sim-table th{text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); padding:12px 16px; border-bottom:1px solid var(--line); font-weight:600;}
+  .sim-table td{padding:14px 16px; border-bottom:1px solid var(--line);}
+  .sim-table tr:last-child td{border-bottom:none;}
+  .sim-table tr.rec td{background:var(--sage-soft);}
+  .badge{display:inline-block; padding:3px 10px; border-radius:99px; font-size:12px; font-weight:600;}
+  .badge.low{background:var(--sage-soft); color:var(--sage);}
+  .badge.med{background:var(--amber-soft); color:#8A6520;}
+  .badge.high{background:var(--wine-soft); color:var(--wine-deep);}
+
+  .cta-final{text-align:center; padding:90px 0 60px;}
+  footer{border-top:1px solid var(--line); padding:44px 0; margin-top:20px;}
+  .foot-inner{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;}
+  .foot-links{display:flex; gap:26px; font-size:13.5px; color:var(--ondark-soft);}
+  .foot-links a:hover{color:var(--ondark);}
+
+  /* ================= APP SHELL (dashboard/recovery) ================= */
+  .shell{display:flex; min-height:100vh;}
+  .sidebar{width:236px; flex-shrink:0; background:var(--glass-strong); backdrop-filter:blur(22px) saturate(160%); -webkit-backdrop-filter:blur(22px) saturate(160%); border-right:1px solid var(--line); padding:20px 14px; position:sticky; top:0; height:100vh; overflow-y:auto; transition:width .2s ease; color:var(--onlight);}
+  .sidebar.collapsed{width:72px;}
+  .sidebar.collapsed .side-label, .sidebar.collapsed .logo-text{display:none;}
+  .side-logo{display:flex; align-items:center; gap:9px; padding:6px 8px 22px; font-weight:600; font-size:16px;}
+  .side-toggle{margin-left:auto; width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); flex-shrink:0;}
+  .side-toggle:hover{background:var(--ivory-deep);}
+  .side-group{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-soft); padding:14px 10px 6px;}
+  .side-item{display:flex; align-items:center; gap:11px; padding:9px 10px; border-radius:10px; font-size:13.8px; font-weight:500; color:var(--ink-soft); margin-bottom:2px; transition:all .2s ease;}
+  .side-item svg{flex-shrink:0; width:17px; height:17px;}
+  .side-item:hover{background:var(--ivory-deep); color:var(--charcoal);}
+  .side-item.active{background:var(--wine-deep); color:var(--ivory); box-shadow:0 8px 20px -8px rgba(87,25,42,.5);}
+
+  .main{flex:1; min-width:0;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:14px 30px; border-bottom:1px solid var(--line); background:var(--glass-strong); backdrop-filter:blur(20px) saturate(160%); -webkit-backdrop-filter:blur(20px) saturate(160%); position:sticky; top:0; z-index:10; color:var(--onlight);}
+  .search-box{display:flex; align-items:center; gap:8px; background:var(--ivory-deep); border-radius:10px; padding:9px 14px; font-size:13.5px; color:var(--ink-soft); width:280px;}
+  .top-right{display:flex; align-items:center; gap:18px;}
+  .ai-status{display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600; color:var(--sage); background:var(--sage-soft); padding:6px 12px; border-radius:99px;}
+  .ai-status .dot{background:var(--sage); animation:agentBlink 1.8s infinite;}
+  .avatar{width:32px; height:32px; border-radius:50%; background:linear-gradient(150deg, var(--wine), var(--wine-deep)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:700;}
+
+  .page-pad{padding:32px 30px 60px; position:relative;}
+  .page-head{margin-bottom:26px;}
+  .page-head h2{font-family:'Fraunces',serif; font-size:27px; font-weight:600; color:var(--ondark);}
+  .page-head p{color:var(--ondark-soft); font-size:14px; margin-top:4px;}
+
+  .kpi-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:22px;}
+  .kpi-card{padding:20px 22px;}
+  .kpi-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;}
+  .kpi-ic{width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px;}
+  .kpi-card b{font-family:'IBM Plex Mono',monospace; font-size:24px; font-weight:600; display:block;}
+  .kpi-card .kpi-label{font-size:12px; color:var(--ink-soft); font-weight:600; margin-bottom:2px;}
+  .kpi-delta{font-size:12px; font-weight:600; margin-top:6px; display:inline-flex; align-items:center; gap:4px;}
+  .kpi-delta.up{color:var(--sage);}
+
+  .two-col{display:grid; grid-template-columns:1.5fr 1fr; gap:18px; margin-bottom:20px;}
+  .panel{padding:22px;}
+  .panel h3{font-size:15px; font-weight:600; margin-bottom:4px;}
+  .panel .sub{font-size:12.5px; color:var(--ink-soft); margin-bottom:18px;}
+
+  .feed-item{display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);}
+  .feed-item:last-child{border-bottom:none;}
+  .feed-dot{width:8px; height:8px; border-radius:50%; margin-top:6px; flex-shrink:0;}
+  .feed-item b{font-size:13.5px; font-weight:600; display:block;}
+  .feed-item span{font-size:12px; color:var(--ink-soft);}
+  .feed-time{margin-left:auto; font-size:11.5px; color:var(--ink-soft); white-space:nowrap; font-family:'IBM Plex Mono',monospace;}
+
+  /* dashboard AI Recovery Activity panel */
+  .activity-panel{padding:26px 28px; margin-bottom:20px;}
+
+  /* recovery center — big transaction card */
+  .rc-top{display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:22px; flex-wrap:wrap;}
+  .txn-card{padding:0; overflow:hidden; margin-bottom:22px;}
+  .txn-head{padding:30px 34px 24px; text-align:center; position:relative;}
+  .txn-eyebrow{font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:10px;}
+  .txn-amt{font-family:'Fraunces',serif; font-size:52px; font-weight:600; color:var(--wine-deep); line-height:1; transition:color .5s ease;}
+  .txn-amt.recovered{color:var(--sage);}
+  .txn-status{font-size:15px; font-weight:600; color:var(--ink-soft); margin-top:8px;}
+  .txn-prob{display:inline-flex; align-items:center; gap:8px; margin-top:16px; padding:8px 16px; border-radius:99px; background:var(--wine-soft); font-size:13.5px; font-weight:600; color:var(--wine-deep);}
+  .txn-prob.done{background:var(--sage-soft); color:var(--sage);}
+
+  .txn-grid{display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--line);}
+  .txn-cell{padding:20px 18px; text-align:center; border-right:1px solid var(--line);}
+  .txn-cell:last-child{border-right:none;}
+  .txn-cell-label{font-size:11px; color:var(--ink-soft); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;}
+  .txn-cell-val{font-size:14.5px; font-weight:600;}
+
+  .timeline{position:relative; padding-left:28px;}
+  .timeline::before{content:''; position:absolute; left:9px; top:6px; bottom:6px; width:1.5px; background:var(--line);}
+  .t-step{position:relative; padding-bottom:26px; opacity:0; transform:translateY(6px); transition:opacity .4s ease, transform .4s ease;}
+  .t-step.show{opacity:1; transform:translateY(0);}
+  .t-step::before{content:''; position:absolute; left:-28px; top:2px; width:19px; height:19px; border-radius:50%; background:var(--card); border:1.5px solid var(--line);}
+  .t-step.done::before{background:var(--sage); border-color:var(--sage);}
+  .t-time{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-soft); margin-bottom:3px;}
+  .t-title{font-size:14.5px; font-weight:600;}
+  .t-detail{font-size:13px; color:var(--ink-soft); margin-top:3px; max-width:480px;}
+  .t-result{margin-top:8px; display:inline-block; padding:5px 12px; background:var(--sage-soft); color:var(--sage); border-radius:8px; font-weight:700; font-size:13px; font-family:'IBM Plex Mono',monospace;}
+
+  .receipt{padding:24px; margin-top:0;}
+  .receipt-row{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px dashed var(--line); font-size:13.5px;}
+  .receipt-row:last-child{border-bottom:none;}
+  .receipt-row span:first-child{color:var(--ink-soft);}
+  .receipt-row span:last-child{font-weight:600; font-family:'IBM Plex Mono',monospace;}
+  .receipt-why{margin-top:14px; padding:14px; background:var(--ivory-deep); border-radius:12px; font-size:13px; color:var(--ink-soft); line-height:1.55;}
+
+  /* ---------- Revenue Leak Detective ---------- */
+  .leak-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  .leak-card{padding:22px;}
+  .leak-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;}
+  .leak-title{font-size:15px; font-weight:600;}
+  .sev-badge{font-size:11px; font-weight:700; padding:3px 9px; border-radius:99px; text-transform:uppercase; letter-spacing:.02em;}
+  .sev-badge.high{background:var(--amber-soft); color:#8A6520;}
+  .sev-badge.medium{background:var(--wine-soft); color:var(--wine-deep);}
+  .sev-badge.critical{background:#F4D9D9; color:#8C2C2C;}
+  .leak-amt{font-family:'IBM Plex Mono',monospace; font-size:24px; font-weight:600; color:var(--wine-deep); margin:8px 0 2px;}
+  .leak-meta{font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;}
+  .leak-prob-row{display:flex; align-items:center; gap:8px; margin-bottom:14px;}
+  .leak-prob-bar{flex:1; height:5px; border-radius:99px; background:var(--ivory-deep); overflow:hidden;}
+  .leak-prob-fill{height:100%; border-radius:99px; background:var(--sage);}
+  .leak-prob-num{font-size:12px; font-weight:700; color:var(--sage); font-family:'IBM Plex Mono',monospace;}
+  .leak-ai{font-size:12.5px; color:var(--ink-soft); line-height:1.5; background:var(--ivory-deep); padding:11px 12px; border-radius:11px; margin-bottom:14px; min-height:56px;}
+  .leak-trend{font-size:11.5px; font-weight:600; margin-left:8px;}
+  .leak-trend.up{color:var(--amber);}
+  .leak-trend.down{color:var(--sage);}
+
+  /* ---------- Strategy Simulator ---------- */
+  .scenario-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px;}
+  .scenario-chip{padding:11px 18px; border-radius:12px; font-size:13.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; transition:all .25s ease;}
+  .scenario-chip.active{background:var(--wine-deep); color:var(--ivory); box-shadow:0 10px 24px -10px rgba(87,25,42,.5);}
+  .rec-callout{display:flex; align-items:center; gap:16px; padding:20px 22px; margin-top:16px;}
+  .rec-callout .rec-ic{width:42px; height:42px; border-radius:12px; background:var(--sage-soft); color:var(--sage); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;}
+  .rec-callout b{display:block; font-size:15px; margin-bottom:3px;}
+  .rec-callout p{font-size:13px; color:var(--ink-soft); line-height:1.5;}
+
+  /* ---------- Guardrail Center ---------- */
+  .guard-row{display:flex; align-items:center; justify-content:space-between; gap:20px; padding:16px 0; border-bottom:1px solid var(--line);}
+  .guard-row:last-child{border-bottom:none;}
+  .guard-label{font-size:14px; font-weight:600;}
+  .guard-label span{display:block; font-size:12px; color:var(--ink-soft); font-weight:500; margin-top:2px;}
+  .guard-val{font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:600; color:var(--wine-deep); min-width:80px; text-align:right;}
+  input[type=range]{-webkit-appearance:none; width:160px; height:4px; border-radius:99px; background:var(--ivory-deep); outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--wine-deep); cursor:pointer; box-shadow:0 2px 6px rgba(87,25,42,.4);}
+  .channel-row{display:flex; gap:8px; flex-wrap:wrap;}
+  .channel-chip{padding:6px 13px; border-radius:9px; font-size:12.5px; font-weight:600; background:var(--sage-soft); color:var(--sage);}
+  .test-box{padding:22px; margin-top:18px;}
+  .test-inputs{display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap;}
+  .test-inputs input{font-family:'IBM Plex Mono',monospace; font-size:14px; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:var(--card); width:160px;}
+  .test-result{padding:14px 16px; border-radius:12px; font-size:13.5px; font-weight:500; display:none;}
+  .test-result.pass{background:var(--sage-soft); color:var(--sage); display:block;}
+  .test-result.fail{background:var(--amber-soft); color:#8A6520; display:block;}
+
+  /* ---------- Human Approval Center ---------- */
+  .approval-card{padding:20px 22px; margin-bottom:14px;}
+  .approval-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;}
+  .approval-cust{font-size:14.5px; font-weight:600;}
+  .approval-amt{font-family:'IBM Plex Mono',monospace; font-size:19px; font-weight:600; color:var(--wine-deep);}
+  .approval-meta{display:flex; gap:18px; font-size:12.5px; color:var(--ink-soft); margin-bottom:10px;}
+  .approval-reason{font-size:13px; color:var(--ink-soft); background:var(--ivory-deep); padding:10px 12px; border-radius:10px; margin-bottom:14px; line-height:1.5;}
+  .approval-actions{display:flex; gap:10px;}
+  .approval-actions button{padding:9px 18px; border-radius:10px; font-size:13px; font-weight:600; transition:all .2s ease;}
+  .btn-approve{background:var(--sage); color:#fff;}
+  .btn-approve:hover{background:#3d5843;}
+  .btn-reject{background:var(--amber-soft); color:#8A6520;}
+  .btn-modify{border:1px solid var(--line); color:var(--charcoal);}
+  .approval-status{font-size:12.5px; font-weight:700; padding:5px 12px; border-radius:99px; display:none;}
+  .approval-status.approved{background:var(--sage-soft); color:var(--sage); display:inline-block;}
+  .approval-status.rejected{background:#F4D9D9; color:#8C2C2C; display:inline-block;}
+
+  /* ---------- Forecast ---------- */
+  .forecast-conf{display:flex; align-items:center; gap:10px; margin-bottom:4px;}
+  .conf-bar{width:120px; height:5px; border-radius:99px; background:var(--ivory-deep); overflow:hidden;}
+  .conf-fill{height:100%; background:var(--sage); border-radius:99px;}
+  .breakdown-row{display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid var(--line);}
+  .breakdown-row:last-child{border-bottom:none;}
+  .breakdown-label{width:170px; font-size:13.5px; font-weight:600; flex-shrink:0;}
+  .breakdown-bar-bg{flex:1; height:8px; border-radius:99px; background:var(--ivory-deep); overflow:hidden;}
+  .breakdown-bar-fill{height:100%; border-radius:99px; background:linear-gradient(90deg, var(--wine), var(--blush));}
+  .breakdown-amt{width:76px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; flex-shrink:0;}
+
+  /* ---------- Audit Trail ---------- */
+  .audit-entry{padding:18px 0; border-bottom:1px solid var(--line);}
+  .audit-entry:last-child{border-bottom:none;}
+  .audit-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .audit-id{font-family:'IBM Plex Mono',monospace; font-size:12.5px; font-weight:600; color:var(--wine-deep);}
+  .audit-time{font-size:11.5px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace;}
+  .audit-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px 20px; font-size:13px;}
+  .audit-grid div span{display:block; font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; font-weight:600; margin-bottom:2px;}
+
+  /* ---------- Analytics ---------- */
+  .baseline-box{display:flex; align-items:center; justify-content:space-around; padding:26px; text-align:center;}
+  .baseline-box .bl{flex:1;}
+  .baseline-box b{display:block; font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:600;}
+  .baseline-box span{font-size:12px; color:var(--ink-soft); font-weight:600;}
+  .baseline-box .arrow{color:var(--ink-soft); font-size:20px; padding:0 14px;}
+  .legend-row{display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:10px;}
+  .legend-row span{display:inline-flex; align-items:center; gap:6px;}
+  .legend-dot{width:8px; height:8px; border-radius:50%; display:inline-block;}
+
+  /* ---------- Customers ---------- */
+  .cust-card{padding:22px; margin-bottom:14px;}
+  .cust-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
+  .cust-name{font-size:15px; font-weight:600;}
+  .cust-name span{display:block; font-size:12px; color:var(--ink-soft); font-weight:500; margin-top:2px;}
+  .risk-chip{font-size:11px; font-weight:700; padding:4px 10px; border-radius:99px; text-transform:uppercase;}
+  .risk-chip.low{background:var(--sage-soft); color:var(--sage);}
+  .risk-chip.medium{background:var(--amber-soft); color:#8A6520;}
+  .cust-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:14px;}
+  .cust-stats div span{display:block; font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; font-weight:600; margin-bottom:3px;}
+  .cust-stats div b{font-family:'IBM Plex Mono',monospace; font-size:14px;}
+  .cust-ai{font-size:13px; color:var(--ink-soft); background:var(--ivory-deep); padding:12px 14px; border-radius:11px; line-height:1.5;}
+
+  /* ---------- AI Assistant ---------- */
+  .chat-wrap{display:flex; flex-direction:column; height:520px;}
+  .chat-log{flex:1; overflow-y:auto; padding:6px 4px 12px; display:flex; flex-direction:column; gap:14px;}
+  .chat-msg{max-width:78%; padding:12px 15px; border-radius:14px; font-size:13.5px; line-height:1.55;}
+  .chat-msg.user{align-self:flex-end; background:var(--wine-deep); color:var(--ivory); border-bottom-right-radius:4px;}
+  .chat-msg.ai{align-self:flex-start; background:var(--ivory-deep); border-bottom-left-radius:4px;}
+  .chat-suggest{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .chat-suggest button{padding:9px 14px; border-radius:11px; background:var(--glass-strong); border:1px solid var(--line); font-size:12.5px; font-weight:600; color:var(--ink-soft); transition:all .2s ease;}
+  .chat-suggest button:hover{border-color:var(--wine); color:var(--wine-deep);}
+  .chat-typing{align-self:flex-start; display:flex; gap:4px; padding:12px 15px; background:var(--ivory-deep); border-radius:14px; border-bottom-left-radius:4px;}
+  .chat-typing span{width:6px; height:6px; border-radius:50%; background:var(--ink-soft); animation:typingBounce 1.1s infinite;}
+  .chat-typing span:nth-child(2){animation-delay:.15s;} .chat-typing span:nth-child(3){animation-delay:.3s;}
+  @keyframes typingBounce{0%,60%,100%{transform:translateY(0); opacity:.5;}30%{transform:translateY(-4px); opacity:1;}}
+
+  /* ---------- Integrations ---------- */
+  .integ-status-row{display:flex; align-items:center; justify-content:space-between; padding:22px 26px; margin-bottom:18px;}
+  .integ-status-l{display:flex; align-items:center; gap:14px;}
+  .integ-logo{width:44px; height:44px; border-radius:12px; background:var(--wine-deep); color:var(--ivory); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px;}
+  .integ-connected{display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:700; color:var(--sage); background:var(--sage-soft); padding:6px 13px; border-radius:99px;}
+  .integ-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:18px;}
+  .integ-cell{padding:18px 20px;}
+  .integ-cell-label{font-size:11px; color:var(--ink-soft); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;}
+  .integ-cell-val{font-size:14.5px; font-weight:600;}
+  .event-row{display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--line); font-size:13px;}
+  .event-row:last-child{border-bottom:none;}
+  .event-row span:first-child{color:var(--ink-soft);}
+
+  /* ---------- Settings ---------- */
+  .settings-tabs{display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;}
+  .settings-tab{padding:10px 16px; border-radius:11px; font-size:13px; font-weight:600; color:var(--ink-soft); cursor:pointer;}
+  .settings-tab.active{background:var(--wine-deep); color:var(--ivory);}
+  .settings-section{display:none;}
+  .settings-section.active{display:block;}
+  .form-row{display:flex; flex-direction:column; gap:6px; margin-bottom:16px;}
+  .form-row label{font-size:12.5px; font-weight:600; color:var(--ink-soft);}
+  .form-row input, .form-row select{font-family:'Work Sans',sans-serif; font-size:14px; padding:11px 14px; border-radius:10px; border:1px solid var(--line); background:var(--card);}
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  .toggle-row{display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--line);}
+  .toggle-row:last-child{border-bottom:none;}
+  .toggle{width:40px; height:22px; border-radius:99px; background:var(--ivory-deep); position:relative; cursor:pointer; transition:background .25s ease; flex-shrink:0;}
+  .toggle::after{content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.2); transition:transform .25s ease;}
+  .toggle.on{background:var(--sage);}
+  .toggle.on::after{transform:translateX(18px);}
+
+
+  .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--wine-deep); color:var(--ivory); padding:12px 20px; border-radius:12px; font-size:13.5px; font-weight:500; opacity:0; pointer-events:none; transition:all .25s ease; z-index:100; box-shadow:0 20px 40px -16px rgba(87,25,42,.5);}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:900px){
+    .grid4{grid-template-columns:repeat(2,1fr);}
+    .metrics{grid-template-columns:repeat(2,1fr);}
+    .guardrail-box{grid-template-columns:1fr;}
+    .two-col{grid-template-columns:1fr;}
+    .kpi-grid{grid-template-columns:1fr 1fr;}
+    .txn-grid{grid-template-columns:1fr 1fr;}
+    .leak-grid{grid-template-columns:1fr;}
+    .guard-row{flex-direction:column; align-items:flex-start; gap:10px;}
+    .audit-grid{grid-template-columns:1fr 1fr;}
+    .cust-stats{grid-template-columns:1fr 1fr;}
+    .integ-grid{grid-template-columns:1fr;}
+    .form-grid{grid-template-columns:1fr;}
+    .baseline-box{flex-direction:column; gap:14px;}
+    .baseline-box .arrow{transform:rotate(90deg);}
+    .lnav-links{display:none;}
+    .sidebar{position:fixed; z-index:40; left:-236px;}
+    .sidebar.mobile-open{left:0;}
+  }
+
+  /* ---------- auth pages (bubble-glass, on the twilight canvas) ---------- */
+  .auth-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:48px 20px; position:relative;}
+  .auth-card{width:100%; max-width:426px; padding:40px 38px 34px;}
+  .auth-head{text-align:center; margin-bottom:26px;}
+  .auth-head .logo{justify-content:center; margin-bottom:16px; color:var(--onlight);}
+  .auth-head h2{font-family:'Fraunces',serif; font-size:25px; font-weight:600; margin-bottom:6px;}
+  .auth-head p{font-size:13.5px; color:var(--ink-soft);}
+  .field-group{margin-bottom:16px; text-align:left;}
+  .field-group label{display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); margin-bottom:7px;}
+  .field-group input{width:100%; padding:12px 14px; border-radius:13px; border:1px solid var(--line); background:rgba(255,255,255,.65); font-family:inherit; font-size:14px; color:var(--onlight); outline:none; transition:border-color .2s ease, box-shadow .2s ease;}
+  .field-group input:focus{border-color:var(--wine); box-shadow:0 0 0 3px var(--wine-soft);}
+  .field-group input.error{border-color:var(--wine-deep); background:rgba(241,222,225,.4);}
+  .field-error{font-size:12px; color:var(--wine-deep); margin-top:6px; display:none;}
+  .field-error.show{display:block;}
+  .auth-submit{width:100%; justify-content:center; padding:13px 20px; margin-top:6px;}
+  .auth-submit:disabled{opacity:.7; cursor:default;}
+  .auth-foot{text-align:center; margin-top:20px; font-size:13.5px; color:var(--ink-soft);}
+  .auth-foot a{color:var(--wine-deep); font-weight:600;}
+  .auth-divider{display:flex; align-items:center; gap:12px; margin:22px 0; color:var(--ink-soft); font-size:12px; text-transform:uppercase; letter-spacing:.05em;}
+  .auth-divider::before, .auth-divider::after{content:''; flex:1; height:1px; background:var(--line);}
+  .auth-demo{font-size:12px; color:var(--ink-soft); background:var(--ivory-deep); border-radius:11px; padding:11px 13px; margin-bottom:18px; line-height:1.5;}
+  .auth-demo b{color:var(--onlight);}
+  .auth-success{text-align:center; padding:8px 0;}
+  .auth-success .check{width:54px; height:54px; border-radius:50%; background:var(--sage-soft); color:var(--sage); display:flex; align-items:center; justify-content:center; font-size:25px; margin:0 auto 16px;}
+  .spinner{width:15px; height:15px; border-radius:50%; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; animation:spin .7s linear infinite; display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .pw-strength{display:flex; gap:4px; margin-top:8px;}
+  .pw-strength span{flex:1; height:4px; border-radius:99px; background:var(--line); transition:background .25s ease;}
+  .pw-strength span.on-weak{background:var(--wine);}
+  .pw-strength span.on-mid{background:var(--gold);}
+  .pw-strength span.on-strong{background:var(--sage);}
+  .pw-strength-label{font-size:11px; color:var(--ink-soft); margin-top:5px;}
+  @media (max-width:520px){
+    .auth-card{padding:32px 24px 28px;}
+  }
+
+  /* ================= API INTEGRATION UI ================= */
+  .api-loading{display:flex; align-items:center; gap:10px; padding:26px; color:var(--ink-soft); font-size:13.5px;}
+  .api-loading .spinner{border-top-color:var(--wine); border-color:var(--wine-soft);}
+  .api-error{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px 18px; border-radius:14px; background:var(--wine-soft); color:var(--wine-deep); font-size:13px; font-weight:600;}
+  .api-error button{padding:7px 14px; border-radius:99px; background:var(--wine-deep); color:#fff; font-size:12px; font-weight:700;}
+  .api-empty{padding:30px; text-align:center; color:var(--ink-soft); font-size:13.5px;}
+  .kpi-skel b{opacity:.4;}
+
+  .side-item.logout-item{color:var(--wine-deep); margin-top:4px;}
+  .side-item.logout-item:hover{background:var(--wine-soft);}
+  .topbar .avatar{cursor:default;}
+  .session-chip{font-size:11.5px; color:var(--ink-soft); font-weight:600; margin-right:6px;}
+
+  /* transaction table */
+  .txn-toolbar{display:flex; align-items:center; justify-content:space-between; gap:14px; margin:22px 0 14px; flex-wrap:wrap;}
+  .txn-search{display:flex; align-items:center; gap:8px; background:var(--ivory-deep); border-radius:10px; padding:9px 14px; font-size:13.5px; width:260px;}
+  .txn-search input{border:none; background:none; outline:none; font-family:inherit; font-size:13.5px; color:var(--onlight); width:100%;}
+  .txn-filters{display:flex; gap:8px; flex-wrap:wrap;}
+  .filter-chip{padding:7px 14px; border-radius:99px; font-size:12.5px; font-weight:600; color:var(--ink-soft); background:var(--ivory-deep); border:1px solid transparent; transition:all .2s ease; cursor:pointer;}
+  .filter-chip:hover{color:var(--onlight);}
+  .filter-chip.active{background:var(--wine-deep); color:#fff; box-shadow:0 8px 18px -8px rgba(87,25,42,.5);}
+  .txn-table-wrap{overflow-x:auto;}
+  .txn-table{width:100%; border-collapse:collapse; font-size:13.6px;}
+  .txn-table th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); padding:12px 14px; border-bottom:1px solid var(--line); font-weight:700;}
+  .txn-table td{padding:13px 14px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  .txn-table tr:last-child td{border-bottom:none;}
+  .txn-row{cursor:pointer; transition:background .15s ease;}
+  .txn-row:hover{background:rgba(124,36,54,.06);}
+  .status-badge{display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:99px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.02em;}
+  .status-badge::before{content:''; width:6px; height:6px; border-radius:50%; background:currentColor;}
+  .status-badge.recovered{background:var(--sage-soft); color:var(--sage);}
+  .status-badge.recovering, .status-badge.awaiting_approval, .status-badge.analyzing, .status-badge.executing, .status-badge.verifying, .status-badge.not_started{background:var(--amber-soft); color:#8A6520;}
+  .status-badge.failed, .status-badge.unrecoverable{background:var(--wine-soft); color:var(--wine-deep);}
+  .status-badge.stopped{background:var(--lavender-soft); color:#5A5F91;}
+  .txn-pagination{display:flex; align-items:center; justify-content:center; gap:14px; margin-top:16px; font-size:13px; color:var(--ink-soft);}
+  .txn-pagination button{padding:7px 14px; border-radius:99px; background:var(--ivory-deep); font-weight:600; font-size:12.5px;}
+  .txn-pagination button:disabled{opacity:.4; cursor:default;}
+
+  /* drawer */
+  .drawer-overlay{position:fixed; inset:0; background:rgba(20,12,26,.45); backdrop-filter:blur(2px); z-index:70; opacity:0; pointer-events:none; transition:opacity .3s ease;}
+  .drawer-overlay.show{opacity:1; pointer-events:auto;}
+  .drawer{position:fixed; top:0; right:0; bottom:0; width:min(460px,92vw); background:rgba(255,255,255,.9); backdrop-filter:blur(28px) saturate(180%); -webkit-backdrop-filter:blur(28px) saturate(180%); border-left:1px solid var(--glass-border); box-shadow:-30px 0 70px -30px rgba(20,12,26,.4); z-index:71; padding:28px 26px 40px; overflow-y:auto; transform:translateX(100%); transition:transform .35s cubic-bezier(.4,0,.2,1); color:var(--onlight);}
+  .drawer.show{transform:translateX(0);}
+  .drawer-close{position:absolute; top:22px; right:22px; width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); background:var(--ivory-deep);}
+  .drawer-close:hover{color:var(--onlight);}
+  .drawer h3{font-family:'Fraunces',serif; font-size:22px; margin:6px 0 2px;}
+  .drawer .drawer-sub{font-size:12.5px; color:var(--ink-soft); margin-bottom:18px;}
+  .drawer-section-title{font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin:20px 0 10px;}
+
+  /* batch recovery panel */
+  .batch-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:16px 0;}
+  .batch-stat{padding:14px 16px; border-radius:14px; background:var(--ivory-deep);}
+  .batch-stat b{display:block; font-family:'IBM Plex Mono',monospace; font-size:19px; font-weight:700;}
+  .batch-stat span{font-size:11px; color:var(--ink-soft); font-weight:600; text-transform:uppercase; letter-spacing:.03em;}
+  .batch-progress{font-size:13px; color:var(--ink-soft); margin:10px 0;}
+  @media (max-width:700px){ .batch-stats{grid-template-columns:1fr 1fr;} }
+
+  .channel-chip{cursor:pointer; transition:all .2s ease; user-select:none;}
+  .channel-chip.active{background:var(--wine-deep); color:#fff; border-color:var(--wine-deep);}
+
+  @media (max-width:700px){
+    .txn-toolbar{flex-direction:column; align-items:stretch;}
+    .txn-search{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div id="orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+  <div class="orb orb-5"></div>
+  <div class="particle" style="width:5px;height:5px; top:22%; left:14%; animation-delay:0s;"></div>
+  <div class="particle" style="width:4px;height:4px; top:35%; left:82%; animation-delay:1.5s;"></div>
+  <div class="particle" style="width:6px;height:6px; top:65%; left:8%; animation-delay:3s;"></div>
+  <div class="particle" style="width:4px;height:4px; top:15%; left:60%; animation-delay:2s;"></div>
+</div>
+
+<div id="sparkles">
+  <div class="spk" style="width:16px; height:16px; top:10%; left:20%; animation-delay:.2s;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c1 5.5 2.7 9.6 5.5 12.5C14.7 15.4 13 19.5 12 25c-1-5.5-2.7-9.6-5.5-12.5C9.3 9.6 11 5.5 12 0z"/></svg></div>
+  <div class="spk" style="width:12px; height:12px; top:26%; left:88%; animation-delay:1.6s;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c1 5.5 2.7 9.6 5.5 12.5C14.7 15.4 13 19.5 12 25c-1-5.5-2.7-9.6-5.5-12.5C9.3 9.6 11 5.5 12 0z"/></svg></div>
+  <div class="spk" style="width:20px; height:20px; top:62%; left:6%; animation-delay:3s;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c1 5.5 2.7 9.6 5.5 12.5C14.7 15.4 13 19.5 12 25c-1-5.5-2.7-9.6-5.5-12.5C9.3 9.6 11 5.5 12 0z"/></svg></div>
+  <div class="spk" style="width:14px; height:14px; top:48%; left:70%; animation-delay:2.3s;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c1 5.5 2.7 9.6 5.5 12.5C14.7 15.4 13 19.5 12 25c-1-5.5-2.7-9.6-5.5-12.5C9.3 9.6 11 5.5 12 0z"/></svg></div>
+  <div class="spk" style="width:10px; height:10px; top:84%; left:40%; animation-delay:4.1s;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c1 5.5 2.7 9.6 5.5 12.5C14.7 15.4 13 19.5 12 25c-1-5.5-2.7-9.6-5.5-12.5C9.3 9.6 11 5.5 12 0z"/></svg></div>
+</div>
+
+<!-- ============================================================ LANDING ============================================================ -->
+<div class="view active" id="view-landing">
+  <nav class="lnav">
+    <div class="lnav-inner">
+      <div class="logo"><div class="logo-mark"></div>RecoverAI</div>
+      <div class="lnav-links">
+        <a href="#workflow">Product</a>
+        <a href="#how">How it works</a>
+        <a href="#guardrails">Security</a>
+      </div>
+      <div class="lnav-cta">
+        <a href="#" class="btn btn-ghost" style="padding:9px 16px;" onclick="go('login'); return false;">Log in</a>
+        <a href="#" class="btn btn-primary" style="padding:9px 16px;" onclick="go('dashboard'); return false;">Launch Recovery Console</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero wrap">
+    <div class="eyebrow glass-strong"><span class="dot"></span> Now supporting Razorpay Test Mode webhooks</div>
+    <h1 class="hero-h serif">Recover revenue <em>before</em><br>it becomes lost revenue.</h1>
+    <p class="hero-sub">RecoverAI detects revenue at risk, chooses intelligent recovery strategies, executes within merchant‑defined guardrails, and measures the revenue actually recovered.</p>
+    <div class="hero-ctas">
+      <a href="#" class="btn btn-primary" onclick="go('dashboard')">Launch Recovery Console →</a>
+      <a href="#how" class="btn btn-ghost">See how it works</a>
+    </div>
+
+    <div class="hero-stage">
+      <div class="kpi-chip glass-strong chip-risk">
+        <div class="chip-ic" style="background:var(--amber-soft); color:#8A6520;">⚠</div>
+        <div><b>₹18.4L</b><span>Revenue at risk</span></div>
+      </div>
+      <div class="kpi-chip glass-strong chip-rate">
+        <div class="chip-ic" style="background:var(--wine-soft); color:var(--wine-deep);">%</div>
+        <div><b>82.4%</b><span>Recovery rate</span></div>
+      </div>
+      <div class="kpi-chip glass-strong chip-incr">
+        <div class="chip-ic" style="background:var(--sage-soft); color:var(--sage);">＋</div>
+        <div><b>₹4.8L</b><span>Incremental revenue</span></div>
+      </div>
+
+      <div class="agent-viz">
+        <div class="glass agent-panel">
+          <div class="agent-top">
+            <div class="agent-brand">
+              <span class="agent-brand-dot"></span>
+              <div><b>✧ RecoverAI Agent</b><span>Monitoring revenue</span></div>
+            </div>
+            <span class="agent-live">Live</span>
+          </div>
+
+          <div class="agent-alert" id="agentAlert">
+            <span class="agent-alert-dot" id="agentAlertDot"></span>
+            <div class="agent-alert-txt" id="agentAlertTxt">Payment failure detected<span>₹8,500 · TXN_48291</span></div>
+          </div>
+
+          <div class="agent-gauge-row">
+            <div>
+              <div class="agent-gauge-num" id="agentGaugeNum">0%</div>
+              <div class="agent-gauge-cap">Recovery probability</div>
+            </div>
+            <div class="agent-gauge-bar"><div class="agent-gauge-fill" id="agentGaugeFill"></div></div>
+          </div>
+
+          <div class="agent-flow" id="agentFlow">
+            <span data-i="0">Detect</span><span class="arrow">→</span>
+            <span data-i="1">Diagnose</span><span class="arrow">→</span>
+            <span data-i="2">Strategize</span><span class="arrow">→</span>
+            <span data-i="3">Guardrail</span><span class="arrow">→</span>
+            <span data-i="4">Execute</span><span class="arrow">→</span>
+            <span data-i="5">Recover</span>
+          </div>
+
+          <div class="agent-final" id="agentFinal">
+            <b id="agentFinalNum">₹8,500 RECOVERED</b>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="wrap">
+    <div class="metrics">
+      <div class="metric glass-strong glass-hover"><b>₹2.14Cr</b><span>Revenue recovered (90d)</span>
+        <svg class="metric-spark" width="90" height="22" viewBox="0 0 90 22"><polyline points="0,18 15,15 30,16 45,10 60,11 75,4 90,3" fill="none" stroke="var(--sage)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="metric glass-strong glass-hover"><b>68.4%</b><span>Average recovery rate</span>
+        <svg class="metric-spark" width="90" height="22" viewBox="0 0 90 22"><polyline points="0,14 15,16 30,9 45,12 60,7 75,8 90,3" fill="none" stroke="var(--wine)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="metric glass-strong glass-hover"><b>4.2s</b><span>Median decision time</span>
+        <svg class="metric-spark" width="90" height="22" viewBox="0 0 90 22"><polyline points="0,8 15,10 30,7 45,11 60,6 75,9 90,7" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="metric glass-strong glass-hover"><b>0</b><span>Guardrail breaches</span>
+        <svg class="metric-spark" width="90" height="22" viewBox="0 0 90 22"><line x1="0" y1="11" x2="90" y2="11" stroke="var(--sage)" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap section" id="workflow">
+    <div class="sec-head center">
+      <div class="sec-eyebrow">The decision loop</div>
+      <h2 class="sec-title">One agent, nine disciplined steps</h2>
+      <p class="sec-sub">Every rupee at risk moves through the same accountable loop — nothing is recovered on guesswork, and nothing acts outside your limits.</p>
+    </div>
+    <div class="loop" id="loopRow"></div>
+  </section>
+
+  <section class="wrap section" id="how">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Capabilities</div>
+      <h2 class="sec-title">Built to act, not just report</h2>
+      <p class="sec-sub">Four systems work together so revenue recovery stops depending on a spreadsheet and a hopeful email.</p>
+    </div>
+    <div class="grid4">
+      <div class="card feat"><div class="feat-ic">⌕</div><h4>Revenue Leak Detective</h4><p>Surfaces failed payments, abandoned checkouts, and overdue invoices with a plain‑language explanation of why they're happening.</p></div>
+      <div class="card feat"><div class="feat-ic">⇄</div><h4>Strategy Simulator</h4><p>Compares retry, payment link, WhatsApp, and human intervention side by side on expected recovery, risk, and effort.</p></div>
+      <div class="card feat"><div class="feat-ic">⛊</div><h4>Guardrail Center</h4><p>Hard limits on amount, contact frequency, and retries — so the agent always knows the exact moment to stop and ask.</p></div>
+      <div class="card feat"><div class="feat-ic">▤</div><h4>Decision Receipts</h4><p>Every automated action leaves an explainable, auditable record — the reasoning, the check, and the outcome.</p></div>
+    </div>
+  </section>
+
+  <section class="wrap section" id="guardrails">
+    <div class="glass guardrail-box">
+      <div class="gr-panel">
+        <div class="sec-eyebrow">Safety</div>
+        <h2 class="sec-title" style="font-size:28px;">AI that knows when not to act</h2>
+        <p class="sec-sub" style="margin-bottom:0;">Every automatic action is checked against limits you set — transaction value, retry count, and contact frequency — before it ever reaches a customer.</p>
+      </div>
+      <div class="gr-panel" style="border-left:1px solid var(--line);">
+        <div class="gr-example glass-strong">
+          <div class="gr-row"><span>Transaction</span><span>₹1,50,000</span></div>
+          <div class="gr-row"><span>AI action proposed</span><span>Retry payment</span></div>
+          <div class="gr-row"><span>Result</span><span style="color:var(--amber);">Approval required</span></div>
+          <div class="gr-verdict">"Transaction exceeds your ₹50,000 automatic action limit — routed to Human Approval Center."</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap section">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Strategy simulator preview</div>
+      <h2 class="sec-title">What recovery strategy should we use?</h2>
+      <p class="sec-sub">For a ₹80,000 subscription‑renewal cohort at risk this week, RecoverAI compares every viable path before choosing one.</p>
+    </div>
+    <div class="glass" style="overflow:hidden;">
+      <table class="sim-table">
+        <thead><tr><th>Strategy</th><th>Expected recovery</th><th>Risk</th><th>Effort</th></tr></thead>
+        <tbody>
+          <tr><td>Retry</td><td class="mono">₹42,000</td><td><span class="badge low">Low</span></td><td><span class="badge low">Low</span></td></tr>
+          <tr><td>Payment Link</td><td class="mono">₹58,000</td><td><span class="badge low">Low</span></td><td><span class="badge low">Low</span></td></tr>
+          <tr class="rec"><td><b>Payment Link + WhatsApp</b> · recommended</td><td class="mono"><b>₹67,000</b></td><td><span class="badge med">Medium</span></td><td><span class="badge med">Medium</span></td></tr>
+          <tr><td>Human Intervention</td><td class="mono">₹52,000</td><td><span class="badge low">Low</span></td><td><span class="badge high">High</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="cta-final wrap">
+    <h2 class="sec-title center" style="max-width:520px;">Stop losing revenue to silence.</h2>
+    <p class="sec-sub center" style="max-width:480px; margin-bottom:30px;">Connect Razorpay Test Mode and watch RecoverAI work your first leak in minutes.</p>
+    <a href="#" class="btn btn-primary" style="padding:15px 28px;" onclick="go('dashboard')">Launch Recovery Console →</a>
+  </section>
+
+  <footer class="wrap">
+    <div class="foot-inner">
+      <div class="logo" style="font-size:15px;"><div class="logo-mark" style="width:20px;height:20px;"></div>RecoverAI</div>
+      <div class="foot-links"><a href="#">Product</a><a href="#">Security</a><a href="#">Docs</a><a href="#">Razorpay Buildathon — Track 3</a></div>
+      <span style="font-size:12.5px; color:var(--ondark-soft);">© 2026 RecoverAI. Demo build.</span>
+    </div>
+  </footer>
+</div>
+
+<!-- ============================================================ APP SHELL ============================================================ -->
+<div class="view" id="view-app">
+  <div class="shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="side-logo"><div class="logo-mark"></div><span class="logo-text">RecoverAI</span><button class="side-toggle" onclick="toggleSidebar()">◂</button></div>
+      <div class="side-group side-label">Workspace</div>
+      <div class="side-item active" data-page="dashboard" onclick="go('dashboard')">◧ <span class="side-label">Overview</span></div>
+      <div class="side-item" data-page="leaks" onclick="go('leaks')">⌕ <span class="side-label">Revenue Leaks</span></div>
+      <div class="side-item" data-page="recovery" onclick="go('recovery')">◎ <span class="side-label">Recovery Center</span></div>
+      <div class="side-item" data-page="simulator" onclick="go('simulator')">⇄ <span class="side-label">Strategy Simulator</span></div>
+      <div class="side-item" data-page="forecast" onclick="go('forecast')">▲ <span class="side-label">Forecast</span></div>
+      <div class="side-group side-label">Oversight</div>
+      <div class="side-item" data-page="guardrails" onclick="go('guardrails')">⛊ <span class="side-label">Guardrails</span></div>
+      <div class="side-item" data-page="approvals" onclick="go('approvals')">✓ <span class="side-label">Approvals</span></div>
+      <div class="side-item" data-page="audit" onclick="go('audit')">▤ <span class="side-label">Audit Trail</span></div>
+      <div class="side-item" data-page="analytics" onclick="go('analytics')">◫ <span class="side-label">Analytics</span></div>
+      <div class="side-group side-label">Account</div>
+      <div class="side-item" data-page="customers" onclick="go('customers')">◐ <span class="side-label">Customers</span></div>
+      <div class="side-item" data-page="assistant" onclick="go('assistant')">✦ <span class="side-label">AI Assistant</span></div>
+      <div class="side-item" data-page="integrations" onclick="go('integrations')">⛶ <span class="side-label">Integrations</span></div>
+      <div class="side-item" data-page="settings" onclick="go('settings')">⚙ <span class="side-label">Settings</span></div>
+      <div class="side-group side-label" style="margin-top:16px; border-top:1px solid var(--line); padding-top:14px;"></div>
+      <div class="side-item" onclick="go('landing')">← <span class="side-label">Back to site</span></div>
+      <div class="side-item logout-item" onclick="handleLogout()">⏻ <span class="side-label">Log out</span></div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="search-box">⌕ <span>Search transactions, customers…</span></div>
+        <div class="top-right">
+          <div class="ai-status"><span class="dot"></span>AI monitoring</div>
+          <div style="font-size:18px; color:var(--ink-soft);">🔔</div>
+          <span class="session-chip" id="sessionChip"></span>
+          <div class="avatar" id="avatarInitials">RS</div>
+        </div>
+      </div>
+
+      <!-- ---------------- DASHBOARD PAGE ---------------- -->
+      <div class="page-pad" id="page-dashboard">
+        <div class="page-head"><h2 id="dashGreeting">Good morning</h2><p>RecoverAI is monitoring your revenue operations.</p></div>
+
+        <div class="kpi-grid">
+          <div class="glass-strong kpi-card glass-hover"><div class="kpi-top"><div><div class="kpi-label">Revenue At Risk</div><b id="kpiAtRisk" class="kpi-skel">…</b></div><div class="kpi-ic" style="background:var(--amber-soft); color:#8A6520;">⚠</div></div><span class="kpi-delta" id="kpiAtRiskDelta" style="color:var(--ink-soft);">Loading…</span></div>
+          <div class="glass-strong kpi-card glass-hover"><div class="kpi-top"><div><div class="kpi-label">Revenue Recovered</div><b id="kpiRecovered" class="kpi-skel">…</b></div><div class="kpi-ic" style="background:var(--sage-soft); color:var(--sage);">✓</div></div><span class="kpi-delta up" id="kpiRecoveredDelta">Loading…</span></div>
+          <div class="glass-strong kpi-card glass-hover"><div class="kpi-top"><div><div class="kpi-label">Incremental Revenue</div><b id="kpiIncremental" class="kpi-skel">…</b></div><div class="kpi-ic" style="background:var(--wine-soft); color:var(--wine-deep);">＋</div></div><span class="kpi-delta" style="color:var(--ink-soft);">vs. manual baseline</span></div>
+          <div class="glass-strong kpi-card glass-hover"><div class="kpi-top"><div><div class="kpi-label">Recovery Rate</div><b id="kpiRecoveryRate" class="kpi-skel">…</b></div><div class="kpi-ic" style="background:var(--sage-soft); color:var(--sage);">%</div></div><span class="kpi-delta up" id="kpiRateDelta">Loading…</span></div>
+        </div>
+
+        <div class="glass-strong activity-panel">
+          <h3 style="margin-bottom:2px;">AI Recovery Activity</h3>
+          <div class="sub" style="color:var(--ink-soft); font-size:12.5px; margin-bottom:18px;">Live view of the decision loop across all active recoveries</div>
+          <div class="loop" id="loopRowDash" style="padding-bottom:4px;"></div>
+        </div>
+
+        <div class="api-error" id="dashboardError" style="display:none; margin-bottom:18px;">
+          <span id="dashboardErrorMsg">Could not load dashboard data.</span>
+          <button onclick="loadDashboard()">Retry</button>
+        </div>
+
+        <div class="two-col">
+          <div class="glass-strong panel">
+            <h3>Revenue recovered — last 7 days</h3>
+            <div class="sub">Actual recovered amount per day, mock data</div>
+            <svg viewBox="0 0 560 200" style="width:100%; height:200px;">
+              <defs><linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--wine)" stop-opacity="0.28"/><stop offset="100%" stop-color="var(--wine)" stop-opacity="0"/></linearGradient></defs>
+              <polyline id="chartLine" points="0,150 80,140 160,120 240,128 320,90 400,70 480,40 560,30" fill="none" stroke="var(--wine)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="0,150 80,140 160,120 240,128 320,90 400,70 480,40 560,30 560,200 0,200" fill="url(#chartGrad)" stroke="none" />
+              <g fill="var(--wine)"><circle cx="0" cy="150" r="3.5"/><circle cx="80" cy="140" r="3.5"/><circle cx="160" cy="120" r="3.5"/><circle cx="240" cy="128" r="3.5"/><circle cx="320" cy="90" r="3.5"/><circle cx="400" cy="70" r="3.5"/><circle cx="480" cy="40" r="3.5"/><circle cx="560" cy="30" r="3.5"/></g>
+            </svg>
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--ink-soft); margin-top:6px;"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span><span>Today</span></div>
+          </div>
+
+          <div class="glass-strong panel">
+            <h3>Live AI activity</h3>
+            <div class="sub">Most recent decisions across your account</div>
+            <div id="feedList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------------- RECOVERY CENTER PAGE ---------------- -->
+      <div class="page-pad" id="page-recovery" style="display:none;">
+        <div class="page-head rc-top">
+          <div><h2>Autonomous Recovery Agent</h2><p>Watch RecoverAI take a single failed payment from detection to recovered revenue.</p></div>
+          <button class="btn btn-primary" id="runBtn" onclick="runRecovery()">▶ Run AI Recovery</button>
+        </div>
+
+        <div class="glass txn-card">
+          <div class="txn-head">
+            <div class="txn-eyebrow" id="txnId">Select a transaction…</div>
+            <div class="txn-amt" id="txnAmt">₹0</div>
+            <div class="txn-status" id="txnStatus">Waiting</div>
+            <div class="txn-prob" id="txnProb"><span id="txnProbNum">—</span> Recovery Probability</div>
+          </div>
+          <div class="txn-grid">
+            <div class="txn-cell"><div class="txn-cell-label">Diagnosis</div><div class="txn-cell-val" id="cellDiagnosis">—</div></div>
+            <div class="txn-cell"><div class="txn-cell-label">Recommended</div><div class="txn-cell-val" id="cellRecommended">—</div></div>
+            <div class="txn-cell"><div class="txn-cell-label">Expected Recovery</div><div class="txn-cell-val mono" id="cellExpected">—</div></div>
+            <div class="txn-cell"><div class="txn-cell-label">Guardrail</div><div class="txn-cell-val" id="txnGuardrail" style="color:var(--ink-soft);">Not checked yet</div></div>
+          </div>
+        </div>
+
+        <div class="two-col" style="align-items:start; margin-bottom:0;">
+          <div class="glass-strong panel">
+            <h3>Decision timeline</h3>
+            <div class="sub">Steps appear as the agent works through the loop</div>
+            <div class="timeline" id="timeline"></div>
+          </div>
+
+          <div>
+            <div class="glass-strong panel" style="margin-bottom:18px;">
+              <h3>Strategy comparison</h3>
+              <div class="sub">Evaluated in this decision</div>
+              <table class="sim-table">
+                <tbody id="strategyComparisonBody">
+                  <tr><td colspan="3" style="color:var(--ink-soft);">Run AI Recovery to see candidate strategies.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="glass-strong receipt" id="receiptCard" style="display:none;">
+              <h3 style="margin-bottom:14px;">AI Decision Receipt</h3>
+              <div class="receipt-row"><span>Transaction</span><span id="rcptTxn">—</span></div>
+              <div class="receipt-row"><span>Recovery probability</span><span id="rcptProb">—</span></div>
+              <div class="receipt-row"><span>Root cause</span><span id="rcptCause">—</span></div>
+              <div class="receipt-row"><span>Selected action</span><span id="rcptAction">—</span></div>
+              <div class="receipt-row"><span>Guardrail check</span><span id="rcptGuardrail">—</span></div>
+              <div class="receipt-row"><span>Execution</span><span id="rcptExecution">—</span></div>
+              <div class="receipt-row"><span>Result</span><span id="rcptResult">—</span></div>
+              <div class="receipt-why"><b style="color:var(--charcoal);">Why did AI choose this?</b><br><span id="rcptWhy">—</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-strong panel" style="margin-top:18px;">
+          <h3>Batch Recovery</h3>
+          <div class="sub">Run the full DETECT→LEARN pipeline across every currently-failed transaction in your account.</div>
+          <div class="batch-progress" id="batchProgress">No batch run yet.</div>
+          <div class="batch-stats" id="batchStats" style="display:none;">
+            <div class="batch-stat"><b id="batchRecoveredAmt">—</b><span>Amount recovered</span></div>
+            <div class="batch-stat"><b id="batchRecoveryRate">—</b><span>Recovery rate</span></div>
+            <div class="batch-stat"><b id="batchStopped">—</b><span>Stopped</span></div>
+            <div class="batch-stat"><b id="batchApproval">—</b><span>Escalated to approval</span></div>
+          </div>
+          <div id="batchStrategyBreakdown"></div>
+          <button class="btn btn-primary" id="batchRunBtn" style="margin-top:14px;" onclick="runBatchRecovery()">▶ Run batch recovery</button>
+        </div>
+      </div>
+
+      <!-- ---------------- REVENUE LEAK DETECTIVE ---------------- -->
+      <div class="page-pad" id="page-leaks" style="display:none;">
+        <div class="page-head"><h2>Revenue Leak Detective</h2><p>AI-detected revenue leaks across your business, ranked by what's actually recoverable.</p></div>
+        <div class="leak-grid" id="leakGrid"></div>
+
+        <div class="page-head" style="margin-top:34px;"><h2 style="font-size:21px;">All Transactions</h2><p>Live from your account — search, filter, and open any transaction for its full recovery timeline.</p></div>
+
+        <div class="glass-strong panel">
+          <div class="txn-toolbar">
+            <div class="txn-search">⌕ <input type="text" id="txnSearch" placeholder="Search transaction ID or reason…" oninput="debouncedTxnSearch()"></div>
+            <div class="txn-filters" id="txnFilters">
+              <button class="filter-chip active" data-status="">All</button>
+              <button class="filter-chip" data-status="failed">Failed</button>
+              <button class="filter-chip" data-status="recovering">Recovering</button>
+              <button class="filter-chip" data-status="recovered">Recovered</button>
+              <button class="filter-chip" data-status="unrecoverable">Unrecoverable</button>
+              <button class="filter-chip" data-status="stopped">Stopped</button>
+            </div>
+          </div>
+          <div id="txnTableState"></div>
+          <div class="txn-table-wrap">
+            <table class="txn-table" id="txnTable" style="display:none;">
+              <thead><tr><th>Transaction</th><th>Amount</th><th>Failure reason</th><th>Strategy</th><th>Probability</th><th>Status</th></tr></thead>
+              <tbody id="txnTableBody"></tbody>
+            </table>
+          </div>
+          <div class="txn-pagination" id="txnPagination" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- ---------------- STRATEGY SIMULATOR ---------------- -->
+      <div class="page-pad" id="page-simulator" style="display:none;">
+        <div class="page-head"><h2>What recovery strategy should we use?</h2><p>Pick a revenue-loss scenario — RecoverAI compares every viable recovery path before choosing one.</p></div>
+        <div class="scenario-row" id="scenarioRow"></div>
+        <div class="glass-strong" style="overflow:hidden;">
+          <table class="sim-table" id="simTable">
+            <thead><tr><th>Strategy</th><th>Expected recovery</th><th>Risk</th><th>Effort</th></tr></thead>
+            <tbody id="simTableBody"></tbody>
+          </table>
+        </div>
+        <div class="glass-strong rec-callout">
+          <div class="rec-ic">✓</div>
+          <div><b id="recTitle">AI Recommendation: Payment Link + WhatsApp</b><p id="recReason">Highest expected recovery while remaining within your configured contact and risk limits.</p></div>
+        </div>
+      </div>
+
+      <!-- ---------------- GUARDRAIL CENTER ---------------- -->
+      <div class="page-pad" id="page-guardrails" style="display:none;">
+        <div class="page-head"><h2>AI Guardrails</h2><p>The limits your Recovery Agent must respect before it ever acts automatically.</p></div>
+        <div class="glass-strong panel">
+          <div class="guard-row"><div class="guard-label">Maximum retry attempts<span>Per transaction, before escalation</span></div><div style="display:flex; align-items:center; gap:12px;"><input type="range" min="1" max="10" value="2" id="rngRetries" oninput="updateGuardVal('rngRetries','valRetries','')"><span class="guard-val" id="valRetries">2</span></div></div>
+          <div class="guard-row"><div class="guard-label">Maximum automatic transaction value<span>Above this, human approval is required</span></div><div style="display:flex; align-items:center; gap:12px;"><input type="range" min="10000" max="200000" step="5000" value="50000" id="rngAmount" oninput="updateGuardVal('rngAmount','valAmount','₹'); runGuardTest();"><span class="guard-val" id="valAmount">₹50,000</span></div></div>
+          <div class="guard-row"><div class="guard-label">Maximum customer contacts<span>Per customer, per day (backend unit)</span></div><div style="display:flex; align-items:center; gap:12px;"><input type="range" min="1" max="6" value="3" id="rngContacts" oninput="updateGuardVal('rngContacts','valContacts','')"><span class="guard-val" id="valContacts">3</span></div></div>
+          <div class="guard-row"><div class="guard-label">Allowed recovery channels<span>Click to toggle — automated outreach only through active channels</span></div><div class="channel-row" id="channelRow">
+            <span class="channel-chip" data-channel="payment_link">Payment Link</span>
+            <span class="channel-chip" data-channel="card_retry">Retry</span>
+            <span class="channel-chip" data-channel="upi_intent">UPI Intent</span>
+            <span class="channel-chip" data-channel="reminder">Reminder (SMS/Email/WhatsApp)</span>
+          </div></div>
+        </div>
+
+        <div class="glass-strong panel" style="margin-bottom:18px;">
+          <div id="guardrailState"></div>
+          <button class="btn btn-primary" id="guardrailSaveBtn" onclick="saveGuardrails()">Save guardrails</button>
+        </div>
+
+        <div class="glass-strong test-box">
+          <h3 style="margin-bottom:4px;">Test a transaction</h3>
+          <div class="sub" style="color:var(--ink-soft); font-size:12.5px; margin-bottom:14px;">See how a transaction is evaluated against your current limits</div>
+          <div class="test-inputs">
+            <input type="text" id="testAmount" value="₹1,50,000">
+            <button class="btn btn-primary" style="padding:10px 18px;" onclick="runGuardTest()">Check guardrails</button>
+          </div>
+          <div class="test-result" id="testResult"></div>
+        </div>
+      </div>
+
+      <!-- ---------------- HUMAN APPROVAL CENTER ---------------- -->
+      <div class="page-pad" id="page-approvals" style="display:none;">
+        <div class="page-head"><h2>Needs Your Approval</h2><p>Actions RecoverAI paused because they crossed a guardrail — nothing here has executed yet.</p></div>
+        <div id="approvalList"></div>
+      </div>
+
+      <!-- ---------------- FORECAST ---------------- -->
+      <div class="page-pad" id="page-forecast" style="display:none;">
+        <div class="page-head"><h2>Revenue-at-Risk Forecast</h2><p>Potential revenue at risk — next 7 days.</p></div>
+        <div class="glass-strong panel" style="margin-bottom:18px;">
+          <h3>₹11.6L projected at risk</h3>
+          <div class="forecast-conf"><span style="font-size:12.5px; color:var(--ink-soft); font-weight:600;">Confidence</span><div class="conf-bar"><div class="conf-fill" style="width:78%;"></div></div><span style="font-size:12.5px; font-weight:700; color:var(--sage);">78%</span></div>
+          <div class="sub" style="margin-top:8px; margin-bottom:18px;">Based on 90 days of transaction and renewal history</div>
+          <svg viewBox="0 0 560 180" style="width:100%; height:180px;">
+            <defs><linearGradient id="forecastGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--wine)" stop-opacity="0.25"/><stop offset="100%" stop-color="var(--wine)" stop-opacity="0"/></linearGradient></defs>
+            <polyline points="0,140 80,132 160,110 240,118 320,80 400,55 480,60 560,30" fill="none" stroke="var(--wine)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 5" opacity="0.9"/>
+            <polyline points="0,140 80,132 160,110 240,118 320,80 400,55 480,60 560,30 560,180 0,180" fill="url(#forecastGrad)" stroke="none"/>
+          </svg>
+          <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--ink-soft); margin-top:4px;"><span>Today</span><span>+1d</span><span>+2d</span><span>+3d</span><span>+4d</span><span>+5d</span><span>+6d</span><span>+7d</span></div>
+          <div class="receipt-why" style="margin-top:18px;"><b style="color:var(--charcoal);">AI forecast explanation</b><br>RecoverAI predicts ₹11.6L may become at risk over the next 7 days, primarily due to upcoming subscription renewals concentrated in the next 72 hours.</div>
+        </div>
+        <div class="glass-strong panel">
+          <h3>Breakdown by category</h3>
+          <div class="sub">Share of the ₹11.6L forecast</div>
+          <div class="breakdown-row"><div class="breakdown-label">Subscription renewals</div><div class="breakdown-bar-bg"><div class="breakdown-bar-fill" style="width:46%;"></div></div><div class="breakdown-amt">₹5.3L</div></div>
+          <div class="breakdown-row"><div class="breakdown-label">Failed payments</div><div class="breakdown-bar-bg"><div class="breakdown-bar-fill" style="width:28%;"></div></div><div class="breakdown-amt">₹3.2L</div></div>
+          <div class="breakdown-row"><div class="breakdown-label">Abandoned checkout</div><div class="breakdown-bar-bg"><div class="breakdown-bar-fill" style="width:16%;"></div></div><div class="breakdown-amt">₹1.9L</div></div>
+          <div class="breakdown-row"><div class="breakdown-label">Overdue invoices</div><div class="breakdown-bar-bg"><div class="breakdown-bar-fill" style="width:10%;"></div></div><div class="breakdown-amt">₹1.2L</div></div>
+        </div>
+      </div>
+
+      <!-- ---------------- AUDIT TRAIL ---------------- -->
+      <div class="page-pad" id="page-audit" style="display:none;">
+        <div class="page-head"><h2>AI Audit Trail</h2><p>An immutable record of every decision RecoverAI has made — what it saw, why, and what happened.</p></div>
+        <div class="glass-strong panel" id="auditPanel"></div>
+      </div>
+
+      <!-- ---------------- ANALYTICS ---------------- -->
+      <div class="page-pad" id="page-analytics" style="display:none;">
+        <div class="page-head"><h2>Analytics</h2><p style="max-width:520px;">Demo metrics from simulated data — structured so real transaction data can replace it directly.</p></div>
+        <div class="kpi-grid">
+          <div class="glass-strong kpi-card"><div class="kpi-top"><div><div class="kpi-label">Total Revenue At Risk</div><b>₹18.4L</b></div><div class="kpi-ic" style="background:var(--amber-soft); color:#8A6520;">⚠</div></div></div>
+          <div class="glass-strong kpi-card"><div class="kpi-top"><div><div class="kpi-label">Total Recovered</div><b>₹7.2L</b></div><div class="kpi-ic" style="background:var(--sage-soft); color:var(--sage);">✓</div></div></div>
+          <div class="glass-strong kpi-card"><div class="kpi-top"><div><div class="kpi-label">Recovery Rate</div><b>82.4%</b></div><div class="kpi-ic" style="background:var(--wine-soft); color:var(--wine-deep);">%</div></div></div>
+          <div class="glass-strong kpi-card"><div class="kpi-top"><div><div class="kpi-label">Incremental Revenue</div><b>₹4.8L</b></div><div class="kpi-ic" style="background:var(--sage-soft); color:var(--sage);">＋</div></div></div>
+        </div>
+        <div class="glass-strong panel" style="margin-bottom:18px;">
+          <h3 style="text-align:center; margin-bottom:2px;">AI vs. illustrative baseline</h3>
+          <div class="sub" style="text-align:center;">"Baseline" is an illustrative manual-recovery estimate — your backend has no manual-recovery tracking to compare against, so only that one figure is not live.</div>
+          <div class="baseline-box">
+            <div class="bl"><b style="color:var(--ink-soft);" id="baselineAmt">₹2.4L</b><span>Baseline (illustrative)</span></div>
+            <div class="arrow">→</div>
+            <div class="bl"><b style="color:var(--wine-deep);" id="baselineRecovered">—</b><span>RecoverAI recovery</span></div>
+            <div class="arrow">＋</div>
+            <div class="bl"><b style="color:var(--sage);" id="baselineIncremental">—</b><span>Incremental revenue</span></div>
+          </div>
+        </div>
+        <div class="two-col" style="margin-bottom:0;">
+          <div class="glass-strong panel">
+            <h3>Recovery by strategy</h3>
+            <div class="sub">Amount recovered per strategy — live from your account</div>
+            <div id="analyticsStrategyBreakdown"><div class="api-loading"><span class="spinner"></span> Loading…</div></div>
+          </div>
+          <div class="glass-strong panel">
+            <h3>Recovery by failure reason</h3>
+            <div class="sub">Transaction count per failure category — live from your account</div>
+            <div id="analyticsFailureBreakdown"><div class="api-loading"><span class="spinner"></span> Loading…</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------------- CUSTOMERS ---------------- -->
+      <div class="page-pad" id="page-customers" style="display:none;">
+        <div class="page-head"><h2>Customer Recovery Intelligence</h2><p>Payment and recovery history per customer, used to choose the right channel.</p></div>
+        <div id="customerList"></div>
+      </div>
+
+      <!-- ---------------- AI ASSISTANT ---------------- -->
+      <div class="page-pad" id="page-assistant" style="display:none;">
+        <div class="page-head"><h2>AI Assistant</h2><p>Ask about your revenue operations — answered from your account's live demo data.</p></div>
+        <div class="glass-strong panel chat-wrap">
+          <div class="chat-suggest" id="chatSuggest"></div>
+          <div class="chat-log" id="chatLog">
+            <div class="chat-msg ai">Hi Rohan — I'm watching your revenue operations. Ask me anything about what's at risk, what's been recovered, or why I made a decision.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------------- INTEGRATIONS ---------------- -->
+      <div class="page-pad" id="page-integrations" style="display:none;">
+        <div class="page-head"><h2>Razorpay Integration</h2><p>Test Mode connection — structured so production APIs and webhooks can be connected later.</p></div>
+        <div class="glass-strong integ-status-row">
+          <div class="integ-status-l"><div class="integ-logo">RP</div><div><div style="font-weight:600; font-size:15px;">Razorpay — Test Mode</div><div style="font-size:12.5px; color:var(--ink-soft);">Connected 14 days ago</div></div></div>
+          <span class="integ-connected"><span class="dot" style="background:var(--sage);"></span> Connected</span>
+        </div>
+        <div class="integ-grid">
+          <div class="glass-strong integ-cell"><div class="integ-cell-label">Webhook status</div><div class="integ-cell-val" style="color:var(--sage);">Active</div></div>
+          <div class="glass-strong integ-cell"><div class="integ-cell-label">Last webhook received</div><div class="integ-cell-val mono">2 min ago</div></div>
+          <div class="glass-strong integ-cell"><div class="integ-cell-label">Integration health</div><div class="integ-cell-val" style="color:var(--sage);">Healthy</div></div>
+        </div>
+        <div class="glass-strong panel" style="margin-bottom:18px;">
+          <h3 style="margin-bottom:14px;">Recent payment events</h3>
+          <div class="event-row"><span>payment.failed</span><span class="mono">TXN_48291 · 2 min ago</span></div>
+          <div class="event-row"><span>payment.captured</span><span class="mono">TXN_48276 · 18 min ago</span></div>
+          <div class="event-row"><span>subscription.charged</span><span class="mono">SUB_2201 · 41 min ago</span></div>
+          <div class="event-row"><span>payment.failed</span><span class="mono">TXN_48211 · 1 hr ago</span></div>
+        </div>
+        <button class="btn btn-primary" onclick="soon('Re-testing the API connection')">Test API connection</button>
+      </div>
+
+      <!-- ---------------- SETTINGS ---------------- -->
+      <div class="page-pad" id="page-settings" style="display:none;">
+        <div class="page-head"><h2>Settings</h2><p>Business profile, recovery preferences, and account security.</p></div>
+        <div class="settings-tabs" id="settingsTabs"></div>
+
+        <div class="glass-strong panel settings-section active" id="settings-profile">
+          <h3 style="margin-bottom:16px;">Business profile</h3>
+          <div class="form-grid">
+            <div class="form-row"><label>Business name</label><input type="text" value="Rohan Textiles Pvt. Ltd."></div>
+            <div class="form-row"><label>Business type</label><select><option>E-commerce</option><option>Subscription / SaaS</option><option>Marketplace</option></select></div>
+            <div class="form-row"><label>Contact email</label><input type="text" value="rohan@recoverai.demo"></div>
+            <div class="form-row"><label>Monthly transaction volume</label><select><option>₹10L – ₹50L</option><option>₹50L – ₹2Cr</option><option>₹2Cr+</option></select></div>
+          </div>
+        </div>
+
+        <div class="glass-strong panel settings-section" id="settings-recovery">
+          <h3 style="margin-bottom:16px;">Recovery preferences</h3>
+          <div class="toggle-row"><div><b style="font-size:13.5px;">Failed payments</b></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-row"><div><b style="font-size:13.5px;">Abandoned checkout</b></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-row"><div><b style="font-size:13.5px;">Subscription renewals</b></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-row"><div><b style="font-size:13.5px;">Overdue invoices</b></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+
+        <div class="glass-strong panel settings-section" id="settings-notifications">
+          <h3 style="margin-bottom:16px;">Notification preferences</h3>
+          <div class="toggle-row"><div><b style="font-size:13.5px;">Email me on human approval requests</b></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-row"><div><b style="font-size:13.5px;">Daily recovery summary</b></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-row"><div><b style="font-size:13.5px;">Guardrail breach alerts</b></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+
+        <div class="glass-strong panel settings-section" id="settings-security">
+          <h3 style="margin-bottom:16px;">Security</h3>
+          <div class="form-row" style="max-width:340px;"><label>Password</label><input type="password" value="••••••••••••"></div>
+          <div class="toggle-row"><div><b style="font-size:13.5px;">Two-factor authentication</b></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+
+        <div class="glass-strong panel settings-section" id="settings-api">
+          <h3 style="margin-bottom:16px;">API &amp; integration settings</h3>
+          <div class="form-row" style="max-width:420px;"><label>Razorpay Test Mode key</label><input type="text" value="rzp_test_••••••••••4821"></div>
+          <div class="form-row" style="max-width:420px;"><label>Webhook URL</label><input type="text" value="https://api.recoverai.demo/webhooks/razorpay"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ LOGIN ============================================================ -->
+<div class="view" id="view-login">
+  <div class="auth-wrap wrap">
+    <form class="glass auth-card" id="loginForm" novalidate onsubmit="return handleLogin(event)">
+      <div class="auth-head">
+        <div class="logo"><div class="logo-mark"></div>RecoverAI</div>
+        <h2 class="serif">Welcome back</h2>
+        <p>Log in to your Recovery Console.</p>
+      </div>
+      <div class="auth-demo">Demo build — use <b>demo@recoverai.dev</b> / <b>Recover@123</b>, or any email + 8‑character password.</div>
+      <div class="field-group">
+        <label for="loginEmail">Email address</label>
+        <input type="email" id="loginEmail" placeholder="you@company.com" autocomplete="email">
+        <div class="field-error" id="loginEmailErr">Enter a valid email address.</div>
+      </div>
+      <div class="field-group">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+        <div class="field-error" id="loginPasswordErr">Password must be at least 8 characters.</div>
+      </div>
+      <button class="btn btn-primary auth-submit" type="submit" id="loginBtn">Log in</button>
+      <div class="auth-foot">Don't have an account? <a href="#" onclick="go('signup'); return false;">Sign up</a></div>
+      <div class="auth-foot" style="margin-top:6px;"><a href="#" onclick="go('landing'); return false;">← Back to site</a></div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================ SIGNUP ============================================================ -->
+<div class="view" id="view-signup">
+  <div class="auth-wrap wrap">
+    <div class="glass auth-card">
+      <div id="signupFormWrap">
+        <div class="auth-head">
+          <div class="logo"><div class="logo-mark"></div>RecoverAI</div>
+          <h2 class="serif">Create your account</h2>
+          <p>Set up your Recovery Console in under a minute.</p>
+        </div>
+        <form novalidate onsubmit="return handleSignup(event)">
+          <div class="field-group">
+            <label for="suName">Full name</label>
+            <input type="text" id="suName" placeholder="Rohan Sharma" autocomplete="name">
+            <div class="field-error" id="suNameErr">Enter your name.</div>
+          </div>
+          <div class="field-group">
+            <label for="suCompany">Business name</label>
+            <input type="text" id="suCompany" placeholder="Acme Retail Pvt Ltd" autocomplete="organization">
+            <div class="field-error" id="suCompanyErr">Enter your business name.</div>
+          </div>
+          <div class="field-group">
+            <label for="suEmail">Work email</label>
+            <input type="email" id="suEmail" placeholder="you@company.com" autocomplete="email">
+            <div class="field-error" id="suEmailErr">Enter a valid email address.</div>
+          </div>
+          <div class="field-group">
+            <label for="suPassword">Password</label>
+            <input type="password" id="suPassword" placeholder="At least 8 characters" autocomplete="new-password" oninput="updatePwStrength()">
+            <div class="pw-strength" id="pwStrength"><span></span><span></span><span></span></div>
+            <div class="pw-strength-label" id="pwStrengthLabel">Use 8+ characters with a number or symbol</div>
+            <div class="field-error" id="suPasswordErr">Password must be at least 8 characters.</div>
+          </div>
+          <div class="field-group">
+            <label for="suConfirm">Confirm password</label>
+            <input type="password" id="suConfirm" placeholder="Re-enter password" autocomplete="new-password">
+            <div class="field-error" id="suConfirmErr">Passwords do not match.</div>
+          </div>
+          <div class="field-group" style="display:flex; align-items:flex-start; gap:9px; margin-bottom:20px;">
+            <input type="checkbox" id="suTerms" style="width:16px; height:16px; margin-top:2px; accent-color:var(--wine);">
+            <label for="suTerms" style="font-size:12.5px; color:var(--ink-soft); font-weight:500; margin-bottom:0;">I agree to the Terms of Service and Test Mode data usage.</label>
+          </div>
+          <div class="field-error" id="suTermsErr" style="margin-top:-12px; margin-bottom:14px;">Please accept the terms to continue.</div>
+          <button class="btn btn-primary auth-submit" type="submit" id="signupBtn">Create account</button>
+          <div class="auth-foot">Already have an account? <a href="#" onclick="go('login'); return false;">Log in</a></div>
+          <div class="auth-foot" style="margin-top:6px;"><a href="#" onclick="go('landing'); return false;">← Back to site</a></div>
+        </form>
+      </div>
+      <div id="signupSuccessWrap" style="display:none;">
+        <div class="auth-success">
+          <div class="check">✓</div>
+          <h2 class="serif" style="font-size:22px; margin-bottom:8px;">Account created</h2>
+          <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:22px;">Taking you to your Recovery Console…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer glass-lux" id="drawer" style="position:fixed;">
+  <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  <div id="drawerContent"></div>
+</div>
+
+<div class="toast glass-strong" id="toast"></div>
+
+
+<script>
+/* ============================================================
+   API SERVICE LAYER
+   ------------------------------------------------------------
+   Centralized fetch client for the RecoverAI backend. This is the
+   static-HTML equivalent of an "environment variable" — since this
+   frontend ships as a single portable file with no build step,
+   there's no process.env/import.meta.env available in the browser.
+   Change API_BASE_URL below to point at your backend, or override
+   it before this script runs via:
+     <script>window.RECOVERAI_API_BASE_URL = "https://your-api.com/api";<\/script>
+   ============================================================ */
+const API_BASE_URL = window.RECOVERAI_API_BASE_URL || 'https://recoverai-backend-swfc.onrender.com/api';
+const FILE_FRONTEND = window.location.protocol === 'file:';
+let fileAccessToken = null;
+
+if (FILE_FRONTEND) {
+  try { fileAccessToken = window.sessionStorage.getItem('recoverai_access_token'); } catch (_) { /* unavailable */ }
+}
+
+function setFileAccessToken(token) {
+  if (!FILE_FRONTEND) return;
+  fileAccessToken = token || null;
+  try {
+    if (fileAccessToken) window.sessionStorage.setItem('recoverai_access_token', fileAccessToken);
+    else window.sessionStorage.removeItem('recoverai_access_token');
+  } catch (_) { /* in-memory fallback remains available */ }
+}
+
+function apiHeaders(extraHeaders = {}) {
+  return {
+    'Content-Type': 'application/json',
+    ...(fileAccessToken ? { Authorization: `Bearer ${fileAccessToken}` } : {}),
+    ...extraHeaders,
+  };
+}
+
+class ApiClientError extends Error {
+  constructor(message, code, status) {
+    super(message);
+    this.code = code;
+    this.status = status;
+  }
+}
+
+async function apiFetch(path, options = {}) {
+  let res;
+  try {
+    res = await fetch(API_BASE_URL + path, {
+      credentials: 'include',
+      headers: apiHeaders(options.headers),
+      ...options,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+    });
+  } catch (networkErr) {
+    throw new ApiClientError('Cannot reach the RecoverAI backend. Is it running at ' + API_BASE_URL + '?', 'NETWORK_ERROR', 0);
+  }
+
+  let json = null;
+  try { json = await res.json(); } catch (_) { /* empty body, e.g. some 204s */ }
+
+  if (!res.ok || !json || json.success === false) {
+    const err = json?.error || {};
+    throw new ApiClientError(err.message || `Request failed (${res.status})`, err.code || 'UNKNOWN_ERROR', res.status);
+  }
+  return json.data;
+}
+
+const API = {
+  auth: {
+    register: (payload) => apiFetch('/auth/register', { method: 'POST', body: payload }),
+    login: (payload) => apiFetch('/auth/login', { method: 'POST', body: payload }),
+    logout: () => apiFetch('/auth/logout', { method: 'POST' }),
+    me: () => apiFetch('/auth/me'),
+  },
+  dashboard: {
+    overview: () => apiFetch('/dashboard/overview'),
+    recoveryFunnel: () => apiFetch('/dashboard/recovery-funnel'),
+    strategyPerformance: () => apiFetch('/dashboard/strategy-performance'),
+    revenueTrends: (days = 14) => apiFetch(`/dashboard/revenue-trends?days=${days}`),
+    recoveryActivity: (limit = 12) => apiFetch(`/dashboard/recovery-activity?limit=${limit}`),
+    topFailureReasons: () => apiFetch('/dashboard/top-failure-reasons'),
+  },
+  transactions: {
+    list: (params = {}) => apiFetch('/transactions?' + new URLSearchParams(params).toString()),
+    get: (id) => apiFetch(`/transactions/${id}`),
+    timeline: (id) => apiFetch(`/transactions/${id}/timeline`),
+  },
+  recovery: {
+    analyze: (id) => apiFetch(`/recovery/analyze/${id}`, { method: 'POST' }),
+    execute: (id) => apiFetch(`/recovery/${id}/execute`, { method: 'POST' }),
+    verify: (id) => apiFetch(`/recovery/${id}/verify`, { method: 'POST' }),
+    decision: (id) => apiFetch(`/recovery/${id}/decision`),
+  },
+  batch: {
+    analyze: (transactionIds) => apiFetch('/recovery/batch/analyze', { method: 'POST', body: { transactionIds } }),
+    execute: (batchId) => apiFetch('/recovery/batch/execute', { method: 'POST', body: { batchId } }),
+    get: (batchId) => apiFetch(`/recovery/batch/${batchId}`),
+    results: (batchId) => apiFetch(`/recovery/batch/${batchId}/results`),
+  },
+  guardrails: {
+    get: () => apiFetch('/guardrails'),
+    update: (payload) => apiFetch('/guardrails', { method: 'PUT', body: payload }),
+  },
+  approvals: {
+    list: (status = 'pending') => apiFetch(`/approvals?status=${status}`),
+    approve: (id, note) => apiFetch(`/approvals/${id}/approve`, { method: 'POST', body: { note } }),
+    reject: (id, note) => apiFetch(`/approvals/${id}/reject`, { method: 'POST', body: { note } }),
+  },
+  audit: {
+    list: (params = {}) => apiFetch('/audit-logs?' + new URLSearchParams(params).toString()),
+  },
+  analytics: {
+    overview: () => apiFetch('/analytics/overview'),
+    strategies: () => apiFetch('/analytics/strategies'),
+    failureReasons: () => apiFetch('/analytics/failure-reasons'),
+    paymentMethods: () => apiFetch('/analytics/payment-methods'),
+    recoveryTrends: (days = 30) => apiFetch(`/analytics/recovery-trends?days=${days}`),
+    aiPerformance: () => apiFetch('/analytics/ai-performance'),
+  },
+  customers: {
+    list: (params = {}) => apiFetch('/customers?' + new URLSearchParams(params).toString()),
+    get: (id) => apiFetch(`/customers/${id}`),
+  },
+  demo: {
+    generate: (count) => apiFetch('/demo/generate-transactions', { method: 'POST', body: { count } }),
+  },
+};
+
+/* ---------- session state ---------- */
+let currentUser = null;
+
+async function checkSession() {
+  try {
+    const { merchant } = await API.auth.me();
+    currentUser = merchant;
+    return true;
+  } catch (_) {
+    currentUser = null;
+    return false;
+  }
+}
+
+function applySessionToChrome() {
+  if (!currentUser) return;
+  const greeting = document.getElementById('dashGreeting');
+  if (greeting) greeting.textContent = `Good morning, ${currentUser.name.split(' ')[0]}`;
+  const chip = document.getElementById('sessionChip');
+  if (chip) chip.textContent = currentUser.email;
+  const avatar = document.getElementById('avatarInitials');
+  if (avatar) avatar.textContent = currentUser.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+}
+
+function showToast(message, tone = 'default') {
+  const t = document.getElementById('toast');
+  t.textContent = message;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function apiErrorMessage(err) {
+  if (err instanceof ApiClientError) return err.message;
+  return 'Something went wrong. Please try again.';
+}
+
+/* ---------- formatting helpers ---------- */
+function formatINR(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1e7) return '₹' + (n / 1e7).toFixed(2) + 'Cr';
+  if (abs >= 1e5) return '₹' + (n / 1e5).toFixed(2) + 'L';
+  return '₹' + n.toLocaleString('en-IN');
+}
+function formatPct(n) { return (n === null || n === undefined || isNaN(n)) ? '—' : n.toFixed(1) + '%'; }
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + ' min ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + ' hr ago';
+  return Math.floor(hrs / 24) + ' d ago';
+}
+function humanize(s) { return (s || '').replace(/_/g, ' '); }
+
+/* ---------- protected-route guard ---------- */
+const APP_PROTECTED_PAGES = ['dashboard','leaks','recovery','simulator','forecast','guardrails','approvals','audit','analytics','customers','assistant','integrations','settings'];
+const PAGE_LOADERS = {
+  dashboard: loadDashboardPage,
+  leaks: loadLeaksPage,
+  recovery: loadRecoveryPage,
+  guardrails: loadGuardrailsPage,
+  approvals: loadApprovalsPage,
+  audit: loadAuditPage,
+  analytics: loadAnalyticsPage,
+  customers: loadCustomersPage,
+};
+
+/* ---------- view routing ---------- */
+const _renderPage = function(page){
+  document.getElementById('view-landing').classList.remove('active');
+  document.getElementById('view-app').classList.remove('active');
+  document.getElementById('view-login').classList.remove('active');
+  document.getElementById('view-signup').classList.remove('active');
+  document.querySelectorAll('.page-pad').forEach(p=>p.style.display = 'none');
+  document.querySelectorAll('.side-item[data-page]').forEach(el=>el.classList.remove('active'));
+  if(page === 'landing'){ document.getElementById('view-landing').classList.add('active'); }
+  else if(page === 'login'){ document.getElementById('view-login').classList.add('active'); resetLoginForm(); }
+  else if(page === 'signup'){ document.getElementById('view-signup').classList.add('active'); resetSignupForm(); }
+  else {
+    document.getElementById('view-app').classList.add('active');
+    const pageEl = document.getElementById('page-'+page);
+    if(pageEl) pageEl.style.display = 'block';
+    const navItem = document.querySelector('.side-item[data-page="'+page+'"]');
+    if(navItem) navItem.classList.add('active');
+  }
+  window.scrollTo(0,0);
+}
+
+/** Public navigation entry point — wraps _renderPage with an auth guard for app pages. */
+async function go(page){
+  if (APP_PROTECTED_PAGES.includes(page)) {
+    if (!currentUser) {
+      const authed = await checkSession();
+      if (!authed) {
+        showToast('Please log in to continue.');
+        _renderPage('login');
+        return;
+      }
+    }
+    _renderPage(page);
+    applySessionToChrome();
+    const loader = PAGE_LOADERS[page];
+    if (loader) loader();
+  } else {
+    _renderPage(page);
+  }
+}
+
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('collapsed'); }
+let toastTimer;
+function soon(name){
+  const t = document.getElementById('toast');
+  t.textContent = name + ' is coming next in this build.';
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ---------- shared icon set for workflow loop ---------- */
+const loopLabels = ['Detect','Predict','Diagnose','Strategize','Guardrail','Execute','Verify','Measure','Learn'];
+const nodeIcons = [
+  '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
+  '<line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>',
+  '<polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/>',
+  '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  '<polygon points="6 3 20 12 6 21 6 3"/>',
+  '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  '<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>',
+  '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>'
+];
+function buildLoopRow(containerId){
+  const el = document.getElementById(containerId);
+  loopLabels.forEach((label, idx)=>{
+    const step = document.createElement('div');
+    step.className = 'loop-step';
+    step.dataset.i = idx;
+    step.innerHTML = '<div class="loop-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+nodeIcons[idx]+'</svg></div><div class="loop-name">'+label+'</div>';
+    el.appendChild(step);
+    if(idx < loopLabels.length-1){ const line = document.createElement('div'); line.className='loop-line'; el.appendChild(line); }
+  });
+}
+buildLoopRow('loopRow');
+buildLoopRow('loopRowDash');
+function setLoopState(containerId, activeIdx){
+  document.querySelectorAll('#'+containerId+' .loop-step').forEach(n=>{
+    const i = parseInt(n.dataset.i);
+    n.classList.toggle('active', i===activeIdx);
+    n.classList.toggle('done', i<activeIdx);
+  });
+}
+
+/* ---------- hero Live Recovery Agent ---------- */
+const heroCaptions = [
+  {alert:'Payment failure detected', ok:false, flow:0, gauge:0},
+  {alert:'Analyzing root cause…', ok:false, flow:1, gauge:35},
+  {alert:'Diagnosis: temporary issuer decline', ok:false, flow:1, gauge:60},
+  {alert:'Selecting recovery strategy…', ok:false, flow:2, gauge:75},
+  {alert:'Strategy selected: Payment Link', ok:false, flow:2, gauge:84},
+  {alert:'Checking guardrails…', ok:false, flow:3, gauge:84},
+  {alert:'Guardrails passed — executing', ok:true, flow:4, gauge:84},
+  {alert:'Payment recovered', ok:true, flow:5, gauge:100, final:true},
+];
+let heroI = 0;
+function tickHero(){
+  const s = heroCaptions[heroI];
+  const alertEl = document.getElementById('agentAlert');
+  const dotEl = document.getElementById('agentAlertDot');
+  const txtEl = document.getElementById('agentAlertTxt');
+  alertEl.classList.toggle('ok', s.ok);
+  txtEl.innerHTML = s.alert + '<span>₹8,500 · TXN_48291</span>';
+
+  document.getElementById('agentGaugeFill').style.width = s.gauge+'%';
+  document.getElementById('agentGaugeNum').textContent = s.gauge+'%';
+  document.getElementById('agentGaugeNum').classList.toggle('recovered', s.gauge===100);
+
+  document.querySelectorAll('#agentFlow span[data-i]').forEach(sp=>{
+    const i = parseInt(sp.dataset.i);
+    sp.classList.toggle('on', i===s.flow);
+    sp.classList.toggle('done', i<s.flow);
+  });
+
+  const finalEl = document.getElementById('agentFinal');
+  if(s.final){
+    finalEl.classList.add('show');
+    const b = document.getElementById('agentFinalNum');
+    b.classList.remove('burst'); void b.offsetWidth; b.classList.add('burst');
+  } else {
+    finalEl.classList.remove('show');
+  }
+
+  heroI = (heroI+1) % heroCaptions.length;
+}
+tickHero();
+setInterval(tickHero, 1700);
+
+/* ---------- dashboard workflow loop cycling ---------- */
+let dashI = 0;
+setInterval(()=>{ setLoopState('loopRowDash', dashI); dashI = (dashI+1) % loopLabels.length; }, 1700);
+setLoopState('loopRowDash', 0);
+
+/* ---------- dashboard feed: populated by loadDashboardPage() via API, see renderDashboardActivity() ---------- */
+
+/* ============================================================
+   RECOVERY CENTER — real analyze → execute → verify pipeline
+   ============================================================ */
+let recoveryTargetId = null; // which transaction the Recovery Center is currently working
+let recoveryRunning = false;
+
+function loadRecoveryPage(){
+  document.getElementById('receiptCard').style.display = 'none';
+  document.getElementById('timeline').innerHTML = '<div class="api-empty">Click "Run AI Recovery" to analyze and recover this transaction.</div>';
+  if (!recoveryTargetId) pickLatestFailedTransaction();
+  else renderRecoveryTarget(recoveryTargetId);
+}
+
+/** Fetches and renders the currently-targeted transaction's real details (used when a specific transaction was selected, e.g. via the drawer's "Investigate" button). */
+async function renderRecoveryTarget(transactionId){
+  document.getElementById('txnId').textContent = transactionId;
+  document.getElementById('txnAmt').textContent = '…';
+  document.getElementById('txnStatus').textContent = 'Loading…';
+  document.getElementById('txnProbNum').textContent = '—';
+  try {
+    const txn = await API.transactions.get(transactionId);
+    if (recoveryTargetId !== transactionId) return; // user navigated away before this resolved
+    document.getElementById('txnId').textContent = txn.transactionId;
+    document.getElementById('txnAmt').textContent = formatINR(txn.amount);
+    document.getElementById('txnStatus').textContent = humanize(txn.status);
+    document.getElementById('txnProbNum').textContent = txn.recoveryProbability != null ? Math.round(txn.recoveryProbability*100) + '%' : '—';
+  } catch (err) {
+    if (recoveryTargetId !== transactionId) return;
+    document.getElementById('txnAmt').textContent = '—';
+    document.getElementById('txnStatus').textContent = 'Error';
+    showToast(apiErrorMessage(err));
+  }
+}
+
+/** Auto-selects a transaction when the user arrives without picking one from the table. */
+async function pickLatestFailedTransaction(){
+  try {
+    const { data } = await apiFetchWithMeta('/transactions?status=failed&limit=1&sortBy=createdAt&sortDir=desc');
+    if (data.length) {
+      recoveryTargetId = data[0].transactionId;
+      document.getElementById('txnId').textContent = recoveryTargetId;
+      document.getElementById('txnAmt').textContent = formatINR(data[0].amount);
+    } else {
+      document.getElementById('txnId').textContent = 'No failed transactions';
+      showToast('No failed transactions found — generate demo data from the backend (POST /api/demo/generate-transactions) first.');
+    }
+  } catch (err) {
+    showToast(apiErrorMessage(err));
+  }
+}
+
+/** Called from a transaction row/drawer — jumps to Recovery Center targeting a specific transaction. */
+function openRecoveryFor(transactionId){
+  recoveryTargetId = transactionId;
+  go('recovery');
+}
+
+async function runRecovery(){
+  if(recoveryRunning) return;
+  if(!recoveryTargetId){ showToast('No transaction selected yet.'); return; }
+  recoveryRunning = true;
+
+  const btn = document.getElementById('runBtn');
+  btn.textContent = 'Analyzing…';
+  document.getElementById('receiptCard').style.display = 'none';
+  document.getElementById('txnGuardrail').textContent = 'Checking…';
+  document.getElementById('txnGuardrail').style.color = 'var(--ink-soft)';
+  document.getElementById('txnAmt').classList.remove('recovered');
+  document.getElementById('txnStatus').textContent = 'Analyzing…';
+  document.getElementById('timeline').innerHTML = '<div class="api-loading"><span class="spinner"></span> Running DETECT → PREDICT → DIAGNOSE → STRATEGIZE…</div>';
+
+  try {
+    // Step 1: DETECT/PREDICT/DIAGNOSE/STRATEGIZE
+    const analysis = await API.recovery.analyze(recoveryTargetId);
+    document.getElementById('txnId').textContent = recoveryTargetId;
+    document.getElementById('txnAmt').textContent = formatINR(analysis.revenueAtRisk);
+    document.getElementById('txnStatus').textContent = 'Diagnosed';
+    document.getElementById('txnProbNum').textContent = Math.round((analysis.recoveryProbability||0)*100) + '%';
+    document.querySelector('#cellDiagnosis').textContent = analysis.diagnosis || '—';
+    document.querySelector('#cellRecommended').textContent = analysis.selectedStrategy ? humanize(analysis.selectedStrategy) : '—';
+    document.querySelector('#cellExpected').textContent = formatINR(analysis.expectedRecoveryAmount);
+    renderStrategyComparison(analysis.recommendedStrategies || []);
+    btn.textContent = 'Checking guardrails…';
+
+    // Step 2: GUARDRAIL → EXECUTE → VERIFY
+    const execResult = await API.recovery.execute(recoveryTargetId);
+    const guardEl = document.getElementById('txnGuardrail');
+    if (execResult.status === 'blocked') {
+      guardEl.textContent = 'Blocked'; guardEl.style.color = 'var(--wine-deep)';
+      document.getElementById('txnStatus').textContent = 'Stopped';
+      showToast('Recovery stopped by guardrail — see the decision receipt for the reason.');
+    } else if (execResult.status === 'awaiting_approval') {
+      guardEl.textContent = 'Requires approval'; guardEl.style.color = 'var(--amber)';
+      document.getElementById('txnStatus').textContent = 'Awaiting approval';
+      showToast('Escalated to the Approvals queue — this transaction exceeds an automatic-action limit.');
+    } else {
+      guardEl.textContent = 'Passed'; guardEl.style.color = 'var(--sage)';
+      document.getElementById('txnStatus').textContent = execResult.recoveryStatus === 'recovered' ? 'Payment Recovered' : humanize(execResult.recoveryStatus);
+      if (execResult.recoveryStatus === 'recovered') {
+        document.getElementById('txnAmt').textContent = formatINR(execResult.actualRecoveredAmount);
+        document.getElementById('txnAmt').classList.add('recovered');
+        document.getElementById('txnProb').classList.add('done');
+      }
+    }
+
+    // Step 3: MEASURE/LEARN — fetch the audit-backed timeline + explainability receipt
+    const [timeline, decision] = await Promise.all([
+      API.transactions.timeline(recoveryTargetId),
+      API.recovery.decision(recoveryTargetId),
+    ]);
+    renderRecoveryTimeline(timeline);
+    renderReceipt(recoveryTargetId, analysis, execResult, decision);
+
+  } catch (err) {
+    showToast(apiErrorMessage(err));
+    document.getElementById('txnStatus').textContent = 'Error';
+  } finally {
+    btn.textContent = '▶ Run AI Recovery';
+    recoveryRunning = false;
+  }
+}
+
+function renderStrategyComparison(candidates){
+  const tbody = document.getElementById('strategyComparisonBody');
+  if (!tbody || !candidates.length) return;
+  const sorted = [...candidates].sort((a,b) => b.probability - a.probability);
+  tbody.innerHTML = sorted.map((c,i) => `<tr class="${i===0?'rec':''}"><td>${i===0?'<b>'+humanize(c.strategy)+'</b>':humanize(c.strategy)}</td><td class="mono">${i===0?'<b>'+Math.round(c.probability*100)+'%</b>':Math.round(c.probability*100)+'%'}</td><td><span class="badge ${c.probability>0.65?'low':c.probability>0.4?'med':'high'}">${c.probability>0.65?'Low':c.probability>0.4?'Med':'High'} risk</span></td></tr>`).join('');
+}
+
+function renderRecoveryTimeline(steps){
+  const tl = document.getElementById('timeline');
+  if (!steps.length) { tl.innerHTML = '<div class="api-empty">No timeline events recorded.</div>'; return; }
+  tl.innerHTML = steps.map(s => `
+    <div class="t-step show${s.result==='success' && s.step==='Verify' ? ' done':''}">
+      <div class="t-time">${new Date(s.timestamp).toLocaleTimeString()}</div>
+      <div class="t-title">${s.step}: ${s.message}</div>
+      ${s.reason ? `<div class="t-detail">${s.reason}</div>` : ''}
+    </div>`).join('');
+}
+
+function renderReceipt(txnId, analysis, execResult, decision){
+  const card = document.getElementById('receiptCard');
+  card.style.display = 'block';
+  document.getElementById('rcptTxn').textContent = txnId;
+  document.getElementById('rcptProb').textContent = Math.round((analysis.recoveryProbability||0)*100) + '%';
+  document.getElementById('rcptCause').textContent = analysis.diagnosis || '—';
+  document.getElementById('rcptAction').textContent = analysis.selectedStrategy ? humanize(analysis.selectedStrategy) : '—';
+  const guardSpan = document.getElementById('rcptGuardrail');
+  guardSpan.textContent = execResult.status === 'blocked' ? 'Blocked' : execResult.status === 'awaiting_approval' ? 'Requires approval' : 'Passed';
+  guardSpan.style.color = execResult.status === 'blocked' ? 'var(--wine-deep)' : execResult.status === 'awaiting_approval' ? 'var(--amber)' : 'var(--sage)';
+  document.getElementById('rcptExecution').textContent = execResult.status === 'awaiting_approval' ? 'Manual approval required' : execResult.executed ? 'Automatic' : 'Not executed';
+  const resultSpan = document.getElementById('rcptResult');
+  if (execResult.recoveryStatus === 'recovered') {
+    resultSpan.textContent = formatINR(execResult.actualRecoveredAmount) + ' recovered';
+    resultSpan.style.color = 'var(--sage)';
+  } else {
+    resultSpan.textContent = humanize(execResult.recoveryStatus || execResult.status);
+    resultSpan.style.color = 'var(--ink-soft)';
+  }
+  document.getElementById('rcptWhy').textContent = decision.selectionReason || analysis.explanation || 'No explanation available.';
+}
+
+/* ============================================================
+   BATCH RECOVERY
+   ============================================================ */
+let batchRunning = false;
+async function runBatchRecovery(){
+  if (batchRunning) return;
+  batchRunning = true;
+  const btn = document.getElementById('batchRunBtn');
+  const progress = document.getElementById('batchProgress');
+  btn.disabled = true;
+  btn.textContent = 'Running…';
+  document.getElementById('batchStats').style.display = 'none';
+
+  try {
+    progress.textContent = 'Creating batch and analyzing every failed transaction (DETECT → STRATEGIZE)…';
+    const analyzed = await API.batch.analyze(); // omit transactionIds → all currently-failed transactions
+    progress.textContent = `Batch ${analyzed.batchId} analyzed — ${analyzed.summary.totalTransactions} transactions, ${formatINR(analyzed.summary.revenueAtRisk)} at risk. Executing (GUARDRAIL → EXECUTE → VERIFY)…`;
+
+    const executed = await API.batch.execute(analyzed.batchId);
+    const s = executed.summary;
+    progress.textContent = `Batch ${executed.batchId} complete.`;
+    document.getElementById('batchRecoveredAmt').textContent = formatINR(s.amountRecovered);
+    document.getElementById('batchRecoveryRate').textContent = formatPct(s.recoveryRate);
+    document.getElementById('batchStopped').textContent = s.stoppedInterventions;
+    document.getElementById('batchApproval').textContent = s.approvalRequired;
+    document.getElementById('batchStats').style.display = 'grid';
+
+    const dist = s.strategyDistribution || {};
+    const succ = s.strategySuccessRate || {};
+    const breakdown = document.getElementById('batchStrategyBreakdown');
+    const strategies = Object.keys(dist);
+    breakdown.innerHTML = strategies.length ? `<div class="drawer-section-title">Strategy performance this batch</div>` + strategies.map(k =>
+      `<div class="breakdown-row"><div class="breakdown-label">${humanize(k)}</div><div class="breakdown-bar-bg"><div class="breakdown-bar-fill" style="width:${succ[k]||0}%;"></div></div><div class="breakdown-amt">${succ[k]||0}%</div></div>`
+    ).join('') : '';
+
+    showToast(`Batch complete — ${formatINR(s.amountRecovered)} recovered (${formatPct(s.recoveryRate)} rate).`);
+    loadDashboardPage(); // refresh KPIs to reflect the batch's impact
+  } catch (err) {
+    progress.textContent = 'Batch run failed.';
+    showToast(apiErrorMessage(err));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '▶ Run batch recovery';
+    batchRunning = false;
+  }
+}
+
+/* ============================================================ REVENUE LEAK DETECTIVE ============================================================ */
+const leakData = [
+  {title:'Failed Payments', amt:'₹6.2L', cust:'184 customers affected', prob:71, sev:'high', trend:'↑ 12%', trendUp:true, ai:'Card declines have clustered around a single issuing bank since Tuesday — likely an issuer-side routing issue, not customer intent.'},
+  {title:'Subscription Renewals', amt:'₹4.8L', cust:'112 customers affected', prob:76, sev:'medium', trend:'↑ 8%', trendUp:true, ai:'Recent failures indicate a concentration of temporary payment failures among recurring customers.'},
+  {title:'Abandoned Checkout', amt:'₹3.1L', cust:'96 customers affected', prob:54, sev:'medium', trend:'↓ 4%', trendUp:false, ai:'Drop-off is concentrated at the OTP step on mobile checkout, particularly on slower connections.'},
+  {title:'Overdue Invoices', amt:'₹2.9L', cust:'41 customers affected', prob:48, sev:'high', trend:'↑ 3%', trendUp:true, ai:'Enterprise accounts over 30 days past due, concentrated in a single renewal cohort from Q2.'},
+  {title:'Repeated Payment Failures', amt:'₹1.4L', cust:'23 customers affected', prob:39, sev:'critical', trend:'↑ 21%', trendUp:true, ai:'Same customers failing 3+ times in 14 days — signals a card or account-level issue, not a transient decline.'},
+];
+function buildLeaks(){
+  const grid = document.getElementById('leakGrid');
+  leakData.forEach(l=>{
+    const card = document.createElement('div');
+    card.className = 'glass-strong leak-card glass-hover';
+    card.innerHTML = `
+      <div class="leak-top"><div class="leak-title">${l.title}</div><span class="sev-badge ${l.sev}">${l.sev}</span></div>
+      <div class="leak-amt">${l.amt}<span class="leak-trend ${l.trendUp?'up':'down'}">${l.trend}</span></div>
+      <div class="leak-meta">${l.cust} · at risk</div>
+      <div class="leak-prob-row"><div class="leak-prob-bar"><div class="leak-prob-fill" style="width:${l.prob}%;"></div></div><span class="leak-prob-num">${l.prob}%</span></div>
+      <div class="leak-ai">${l.ai}</div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center; padding:11px;" onclick="go('recovery')">Investigate with AI →</button>
+    `;
+    grid.appendChild(card);
+  });
+}
+buildLeaks();
+
+/* ============================================================ STRATEGY SIMULATOR ============================================================ */
+const scenarios = [
+  {name:'Subscription cohort · ₹80,000', rows:[
+    {s:'Retry', amt:'₹42,000', risk:'low', effort:'low'},
+    {s:'Payment Link', amt:'₹58,000', risk:'low', effort:'low'},
+    {s:'Payment Link + WhatsApp', amt:'₹67,000', risk:'med', effort:'med', rec:true},
+    {s:'Human Intervention', amt:'₹52,000', risk:'low', effort:'high'},
+  ], recTitle:'AI Recommendation: Payment Link + WhatsApp', recReason:'Highest expected recovery while remaining within your configured contact and risk limits.'},
+  {name:'High-value transaction · ₹1,20,000', rows:[
+    {s:'Retry', amt:'₹58,000', risk:'low', effort:'low'},
+    {s:'Payment Link', amt:'₹79,000', risk:'low', effort:'low'},
+    {s:'WhatsApp', amt:'₹84,000', risk:'med', effort:'med'},
+    {s:'Human Intervention', amt:'₹1,02,000', risk:'low', effort:'high', rec:true},
+  ], recTitle:'AI Recommendation: Human Intervention', recReason:'Transaction exceeds your automatic action threshold — routed for approval rather than executed unattended.'},
+  {name:'Abandoned checkout batch · ₹45,000', rows:[
+    {s:'Retry', amt:'₹9,000', risk:'low', effort:'low'},
+    {s:'Email reminder', amt:'₹14,000', risk:'low', effort:'low', rec:false},
+    {s:'WhatsApp', amt:'₹26,000', risk:'med', effort:'med', rec:true},
+    {s:'Human Intervention', amt:'₹16,000', risk:'low', effort:'high'},
+  ], recTitle:'AI Recommendation: WhatsApp', recReason:'Checkout abandonment responds best to a same-session nudge — WhatsApp nearly doubles the recovery rate of email here.'},
+];
+function riskBadge(r){ return r==='low' ? '<span class="badge low">Low</span>' : r==='med' ? '<span class="badge med">Medium</span>' : '<span class="badge high">High</span>'; }
+function renderScenario(idx){
+  const sc = scenarios[idx];
+  document.querySelectorAll('.scenario-chip').forEach((c,i)=>c.classList.toggle('active', i===idx));
+  const body = document.getElementById('simTableBody');
+  body.innerHTML = sc.rows.map(r=>`<tr class="${r.rec?'rec':''}"><td>${r.rec?'<b>'+r.s+'</b> · recommended':r.s}</td><td class="mono">${r.rec?'<b>'+r.amt+'</b>':r.amt}</td><td>${riskBadge(r.risk)}</td><td>${riskBadge(r.effort)}</td></tr>`).join('');
+  document.getElementById('recTitle').textContent = sc.recTitle;
+  document.getElementById('recReason').textContent = sc.recReason;
+}
+const scenarioRow = document.getElementById('scenarioRow');
+scenarios.forEach((sc,i)=>{
+  const chip = document.createElement('div');
+  chip.className = 'glass-strong scenario-chip' + (i===0?' active':'');
+  chip.textContent = sc.name;
+  chip.onclick = ()=>renderScenario(i);
+  scenarioRow.appendChild(chip);
+});
+renderScenario(0);
+
+/* ============================================================ GUARDRAIL CENTER ============================================================ */
+function updateGuardVal(rangeId, labelId, prefix){
+  const v = document.getElementById(rangeId).value;
+  document.getElementById(labelId).textContent = prefix ? prefix + Number(v).toLocaleString('en-IN') : v;
+}
+function runGuardTest(){
+  const raw = document.getElementById('testAmount').value.replace(/[₹,\s]/g,'');
+  const amount = parseInt(raw, 10);
+  const limit = parseInt(document.getElementById('rngAmount').value, 10);
+  const result = document.getElementById('testResult');
+  if(isNaN(amount)){ result.className='test-result'; return; }
+  if(amount <= limit){
+    result.className = 'test-result pass';
+    result.innerHTML = '<b>Approved automatically.</b> ₹'+amount.toLocaleString('en-IN')+' is within your ₹'+limit.toLocaleString('en-IN')+' automatic action limit.';
+  } else {
+    result.className = 'test-result fail';
+    result.innerHTML = '<b>Human approval required.</b> ₹'+amount.toLocaleString('en-IN')+' exceeds your ₹'+limit.toLocaleString('en-IN')+' automatic action limit — routed to the Human Approval Center.';
+  }
+}
+
+/* ============================================================
+   GUARDRAILS — load real config, save changes
+   ============================================================ */
+const CHANNEL_TO_STRATEGY = { payment_link:'payment_link', card_retry:'card_retry', upi_intent:'upi_intent', reminder:'reminder' };
+let loadedGuardrail = null;
+
+async function loadGuardrailsPage(){
+  const stateEl = document.getElementById('guardrailState');
+  stateEl.innerHTML = '<div class="api-loading"><span class="spinner"></span> Loading guardrail configuration…</div>';
+  document.getElementById('guardrailSaveBtn').disabled = true;
+  try {
+    const g = await API.guardrails.get();
+    loadedGuardrail = g;
+    document.getElementById('rngRetries').value = g.maxRetryAttempts;
+    updateGuardVal('rngRetries','valRetries','');
+    document.getElementById('rngAmount').value = g.approvalThresholdAmount;
+    updateGuardVal('rngAmount','valAmount','₹');
+    document.getElementById('rngContacts').value = g.maxCustomerContactAttempts;
+    updateGuardVal('rngContacts','valContacts','');
+    document.querySelectorAll('#channelRow .channel-chip').forEach(chip => {
+      chip.classList.toggle('active', g.allowedStrategies.includes(chip.dataset.channel));
+    });
+    stateEl.innerHTML = `<div style="font-size:12.5px; color:var(--ink-soft);">Loaded from your account. Automatic recovery is currently <b style="color:${g.automaticRecoveryEnabled?'var(--sage)':'var(--wine-deep)'};">${g.automaticRecoveryEnabled?'enabled':'disabled'}</b>.</div>`;
+    document.getElementById('guardrailSaveBtn').disabled = false;
+    runGuardTest();
+  } catch (err) {
+    stateEl.innerHTML = `<div class="api-error"><span>${apiErrorMessage(err)}</span><button onclick="loadGuardrailsPage()">Retry</button></div>`;
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const chip = e.target.closest && e.target.closest('.channel-chip');
+  if (chip && chip.closest('#channelRow')) chip.classList.toggle('active');
+});
+
+async function saveGuardrails(){
+  const btn = document.getElementById('guardrailSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  const activeChannels = [...document.querySelectorAll('#channelRow .channel-chip.active')].map(c => CHANNEL_TO_STRATEGY[c.dataset.channel]);
+  try {
+    const updated = await API.guardrails.update({
+      maxRetryAttempts: parseInt(document.getElementById('rngRetries').value, 10),
+      approvalThresholdAmount: parseInt(document.getElementById('rngAmount').value, 10),
+      maxRecoveryAmount: parseInt(document.getElementById('rngAmount').value, 10),
+      maxCustomerContactAttempts: parseInt(document.getElementById('rngContacts').value, 10),
+      allowedStrategies: activeChannels.length ? activeChannels : loadedGuardrail?.allowedStrategies || ['payment_link'],
+    });
+    loadedGuardrail = updated;
+    showToast('Guardrails updated — changes apply to new decisions immediately.');
+  } catch (err) {
+    showToast(apiErrorMessage(err));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save guardrails';
+  }
+}
+runGuardTest();
+
+/* ============================================================ HUMAN APPROVAL CENTER ============================================================ */
+async function loadApprovalsPage(){
+  const list = document.getElementById('approvalList');
+  list.innerHTML = '<div class="api-loading"><span class="spinner"></span> Loading pending approvals…</div>';
+  try {
+    const approvals = await API.approvals.list('pending');
+    if (!approvals.length) { list.innerHTML = '<div class="api-empty">Nothing waiting on you right now — every recent decision is within your guardrails.</div>'; return; }
+    list.innerHTML = approvals.map(a => `
+      <div class="glass-strong approval-card" id="card-${a._id}">
+        <div class="approval-top">
+          <div><div class="approval-cust">${a.transactionId}</div></div>
+          <div style="text-align:right;"><div class="approval-amt">${formatINR(a.amount)}</div><span class="approval-status" id="status-${a._id}"></span></div>
+        </div>
+        <div class="approval-meta"><span>AI confidence: <b>${a.aiConfidence!=null?Math.round(a.aiConfidence*100)+'%':'—'}</b></span><span>Proposed: <b>${humanize(a.proposedStrategy)}</b></span></div>
+        <div class="approval-reason">${a.reason}</div>
+        <div class="approval-actions" id="actions-${a._id}">
+          <button class="btn-approve" onclick="decideApproval('${a._id}','approve')">Approve</button>
+          <button class="btn-reject" onclick="decideApproval('${a._id}','reject')">Reject</button>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    list.innerHTML = `<div class="api-error"><span>${apiErrorMessage(err)}</span><button onclick="loadApprovalsPage()">Retry</button></div>`;
+  }
+}
+async function decideApproval(id, decision){
+  document.getElementById('actions-'+id).style.display = 'none';
+  const status = document.getElementById('status-'+id);
+  status.textContent = decision === 'approve' ? 'Approving…' : 'Rejecting…';
+  status.className = 'approval-status';
+  try {
+    if (decision === 'approve') await API.approvals.approve(id);
+    else await API.approvals.reject(id);
+    status.textContent = decision === 'approve' ? 'Approved' : 'Rejected';
+    status.className = 'approval-status ' + (decision === 'approve' ? 'approved' : 'rejected');
+    showToast(decision === 'approve' ? 'Recovery action approved and executed.' : 'Recovery action rejected — no action will be taken.');
+    loadDashboardPage();
+  } catch (err) {
+    showToast(apiErrorMessage(err));
+    document.getElementById('actions-'+id).style.display = 'flex';
+  }
+}
+
+/* ============================================================ AUDIT TRAIL ============================================================ */
+async function loadAuditPage(){
+  const panel = document.getElementById('auditPanel');
+  panel.innerHTML = '<div class="api-loading"><span class="spinner"></span> Loading audit trail…</div>';
+  try {
+    const logs = await API.audit.list({ limit: 40 });
+    if (!logs.length) { panel.innerHTML = '<div class="api-empty">No audit events yet — run an AI recovery or generate demo data to populate the trail.</div>'; return; }
+    panel.innerHTML = logs.map(a => `
+      <div class="audit-entry">
+        <div class="audit-head"><span class="audit-id">${humanize(a.eventType)}</span><span class="audit-time">${new Date(a.createdAt).toLocaleString()}</span></div>
+        <div class="audit-grid">
+          <div><span>Transaction</span>${a.transactionId || a.batchId || '—'}</div>
+          <div><span>Action</span>${a.action}</div>
+          <div><span>Result</span>${humanize(a.result)}</div>
+          <div><span>Reason</span>${a.reason || '—'}</div>
+          <div><span>Actor</span>${a.actor}</div>
+          <div><span>Source</span>${a.source}</div>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    panel.innerHTML = `<div class="api-error"><span>${apiErrorMessage(err)}</span><button onclick="loadAuditPage()">Retry</button></div>`;
+  }
+}
+
+/* ============================================================ CUSTOMERS ============================================================ */
+async function loadCustomersPage(){
+  const list = document.getElementById('customerList');
+  list.innerHTML = '<div class="api-loading"><span class="spinner"></span> Loading customer recovery intelligence…</div>';
+  try {
+    const { data } = await apiFetchWithMeta('/customers?limit=20');
+    if (!data.length) { list.innerHTML = '<div class="api-empty">No customers yet — customers are created automatically as transactions come in.</div>'; return; }
+    list.innerHTML = data.map(c => {
+      const hist = c.strategyHistory || {};
+      const rates = Object.entries(hist).map(([k,v]) => [k, v.attempts ? v.successes/v.attempts : 0]);
+      rates.sort((a,b) => b[1]-a[1]);
+      const preferred = rates.length && rates[0][1] > 0 ? humanize(rates[0][0]) : '—';
+      const prob = rates.length && rates[0][1] > 0 ? Math.round(rates[0][1]*100)+'%' : '—';
+      const risk = c.failedPayments > c.successfulPayments ? 'high' : c.failedPayments > 0 ? 'medium' : 'low';
+      return `
+      <div class="glass-strong cust-card">
+        <div class="cust-top"><div class="cust-name">${c.customerRef}<span>${c.totalTransactions} total transactions</span></div><span class="risk-chip ${risk}">${risk} risk</span></div>
+        <div class="cust-stats">
+          <div><span>Successful payments</span><b>${c.successfulPayments}</b></div>
+          <div><span>Failed payments</span><b>${c.failedPayments}</b></div>
+          <div><span>Preferred channel</span><b>${preferred}</b></div>
+          <div><span>Best recovery probability</span><b>${prob}</b></div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    list.innerHTML = `<div class="api-error"><span>${apiErrorMessage(err)}</span><button onclick="loadCustomersPage()">Retry</button></div>`;
+  }
+}
+
+/* ============================================================
+   ANALYTICS
+   ============================================================ */
+async function loadAnalyticsPage(){
+  try {
+    const [overview, strategies, failureReasons] = await Promise.all([
+      API.analytics.overview(),
+      API.analytics.strategies(),
+      API.analytics.failureReasons(),
+    ]);
+    const kpis = document.querySelectorAll('#page-analytics .kpi-grid .kpi-card b');
+    if (kpis[0]) kpis[0].textContent = formatINR(overview.revenueAtRisk);
+    if (kpis[1]) kpis[1].textContent = formatINR(overview.revenueRecovered);
+    if (kpis[2]) kpis[2].textContent = formatPct(overview.recoveryRate);
+    if (kpis[3]) kpis[3].textContent = formatINR(overview.incrementalRevenue);
+    const baseRecovered = document.getElementById('baselineRecovered');
+    const baseIncremental = document.getElementById('baselineIncremental');
+    if (baseRecovered) baseRecovered.textContent = formatINR(overview.revenueRecovered);
+    if (baseIncremental) baseIncremental.textContent = formatINR(overview.incrementalRevenue);
+
+    const stratWrap = document.getElementById('analyticsStrategyBreakdown');
+    if (stratWrap) {
+      if (!strategies.length) { stratWrap.innerHTML = '<div class="api-empty">No strategy data yet.</div>'; }
+      else {
+        const maxAmt = Math.max(1, ...strategies.map(s => s.amountRecovered));
+        stratWrap.innerHTML = strategies.map(s => `<div class="breakdown-row"><div class="breakdown-label">${humanize(s.strategy)}</div><div class="breakdown-bar-bg"><div class="breakdown-bar-fill" style="width:${Math.round((s.amountRecovered/maxAmt)*100)}%;"></div></div><div class="breakdown-amt">${formatINR(s.amountRecovered)}</div></div>`).join('');
+      }
+    }
+    const reasonWrap = document.getElementById('analyticsFailureBreakdown');
+    if (reasonWrap) {
+      if (!failureReasons.length) { reasonWrap.innerHTML = '<div class="api-empty">No failure data yet.</div>'; }
+      else {
+        const maxCount = Math.max(1, ...failureReasons.map(r => r.count));
+        reasonWrap.innerHTML = failureReasons.map(r => `<div class="breakdown-row"><div class="breakdown-label">${humanize(r.category)}</div><div class="breakdown-bar-bg"><div class="breakdown-bar-fill" style="width:${Math.round((r.count/maxCount)*100)}%;"></div></div><div class="breakdown-amt">${r.count}</div></div>`).join('');
+      }
+    }
+  } catch (err) {
+    showToast(apiErrorMessage(err));
+  }
+}
+
+/* ============================================================ AI ASSISTANT ============================================================ */
+const assistantQA = {
+  "Why did revenue drop this week?": "Revenue at risk rose 12% this week, mostly from failed payments clustered around one issuing bank on Tuesday — not a broad customer trend.",
+  "Which recovery strategy performed best?": "Payment Link led with 38% of recovered revenue, followed by WhatsApp at 27%. WhatsApp converts faster but costs more contact allowance per customer.",
+  "Show me high-value failed payments.": "Two failures above ₹1L right now: Customer #4821 at ₹1,20,000 (89% recovery odds, awaiting your approval) and Customer #7714 at ₹2,10,000 (91% odds, also awaiting approval).",
+  "How much revenue is at risk?": "₹18.4L total, with ₹11.6L more forecast over the next 7 days — mainly upcoming subscription renewals.",
+  "Why did RecoverAI stop this action?": "For Customer #4821, the recovery action paused because a ₹1,20,000 retry exceeds your ₹50,000 automatic action limit — it's sitting in the Human Approval Center.",
+  "What should I prioritize today?": "Two items: approve or reject the ₹1,20,000 and ₹2,10,000 requests waiting in Human Approval, and review the Subscription Renewals leak — it's your largest recoverable category at ₹4.8L."
+};
+function buildChatSuggest(){
+  const wrap = document.getElementById('chatSuggest');
+  Object.keys(assistantQA).forEach(q=>{
+    const b = document.createElement('button');
+    b.textContent = q;
+    b.onclick = ()=>askAssistant(q);
+    wrap.appendChild(b);
+  });
+}
+function askAssistant(q){
+  const log = document.getElementById('chatLog');
+  const userMsg = document.createElement('div');
+  userMsg.className = 'chat-msg user';
+  userMsg.textContent = q;
+  log.appendChild(userMsg);
+
+  const typing = document.createElement('div');
+  typing.className = 'chat-typing';
+  typing.innerHTML = '<span></span><span></span><span></span>';
+  log.appendChild(typing);
+  log.scrollTop = log.scrollHeight;
+
+  setTimeout(()=>{
+    typing.remove();
+    const aiMsg = document.createElement('div');
+    aiMsg.className = 'chat-msg ai';
+    aiMsg.textContent = assistantQA[q] || "I can only answer from the data in this demo account right now.";
+    log.appendChild(aiMsg);
+    log.scrollTop = log.scrollHeight;
+  }, 900);
+}
+buildChatSuggest();
+
+/* ============================================================ SETTINGS ============================================================ */
+const settingsTabs = [
+  {id:'profile', label:'Business profile'},
+  {id:'recovery', label:'Recovery preferences'},
+  {id:'notifications', label:'Notifications'},
+  {id:'security', label:'Security'},
+  {id:'api', label:'API & integrations'},
+];
+function buildSettingsTabs(){
+  const wrap = document.getElementById('settingsTabs');
+  settingsTabs.forEach((t,i)=>{
+    const chip = document.createElement('div');
+    chip.className = 'settings-tab glass-strong' + (i===0?' active':'');
+    chip.textContent = t.label;
+    chip.onclick = ()=>{
+      document.querySelectorAll('.settings-tab').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      document.querySelectorAll('.settings-section').forEach(s=>s.classList.remove('active'));
+      document.getElementById('settings-'+t.id).classList.add('active');
+    };
+    wrap.appendChild(chip);
+  });
+}
+buildSettingsTabs();
+
+/* ================= LOGIN / SIGNUP — validation & demo credentials ================= */
+const DEMO_CREDENTIALS = { email:'demo@recoverai.dev', password:'Recover@123' };
+
+function isValidEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+function setFieldError(inputId, errId, show){
+  const input = document.getElementById(inputId);
+  const err = document.getElementById(errId);
+  if(input) input.classList.toggle('error', show);
+  if(err) err.classList.toggle('show', show);
+}
+
+function resetLoginForm(){
+  const f = document.getElementById('loginForm');
+  if(f) f.reset();
+  setFieldError('loginEmail','loginEmailErr', false);
+  setFieldError('loginPassword','loginPasswordErr', false);
+  const btn = document.getElementById('loginBtn');
+  if(btn){ btn.disabled = false; btn.textContent = 'Log in'; }
+}
+
+function resetSignupForm(){
+  document.getElementById('signupFormWrap').style.display = 'block';
+  document.getElementById('signupSuccessWrap').style.display = 'none';
+  ['suName','suCompany','suEmail','suPassword','suConfirm'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const terms = document.getElementById('suTerms'); if(terms) terms.checked = false;
+  ['suName','suCompany','suEmail','suPassword','suConfirm'].forEach(id=>setFieldError(id, id+'Err', false));
+  setFieldError('suTerms','suTermsErr', false);
+  updatePwStrength();
+  const btn = document.getElementById('signupBtn');
+  if(btn){ btn.disabled = false; btn.textContent = 'Create account'; }
+}
+
+function updatePwStrength(){
+  const pw = document.getElementById('suPassword').value;
+  const bars = document.querySelectorAll('#pwStrength span');
+  const label = document.getElementById('pwStrengthLabel');
+  bars.forEach(b=>{ b.className = ''; });
+  if(!pw){ label.textContent = 'Use 8+ characters with a number or symbol'; return; }
+  let score = 0;
+  if(pw.length >= 8) score++;
+  if(/[0-9]/.test(pw) && /[a-zA-Z]/.test(pw)) score++;
+  if(/[^a-zA-Z0-9]/.test(pw) && pw.length >= 10) score++;
+  const cls = score <= 1 ? 'on-weak' : (score === 2 ? 'on-mid' : 'on-strong');
+  const labels = { 'on-weak':'Weak — add a number, symbol, or more length', 'on-mid':'Good — a symbol would make this stronger', 'on-strong':'Strong password' };
+  for(let i=0;i<Math.max(score,1) && i<3;i++){ bars[i].className = cls; }
+  label.textContent = pw.length < 8 ? 'Needs at least 8 characters' : labels[cls];
+}
+
+async function handleLogin(e){
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  let valid = true;
+  if(!isValidEmail(email)){ setFieldError('loginEmail','loginEmailErr', true); valid = false; } else { setFieldError('loginEmail','loginEmailErr', false); }
+  if(pass.length < 8){ setFieldError('loginPassword','loginPasswordErr', true); valid = false; } else { setFieldError('loginPassword','loginPasswordErr', false); }
+  if(!valid) return false;
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Logging in…';
+  try {
+    const { merchant, token } = await API.auth.login({ email, password: pass });
+    setFileAccessToken(token);
+    currentUser = merchant;
+    showToast(`Welcome back, ${merchant.name.split(' ')[0]}.`);
+    await go('dashboard');
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Log in';
+    if (err instanceof ApiClientError && err.status === 401) {
+      setFieldError('loginPassword','loginPasswordErr', true);
+      document.getElementById('loginPasswordErr').textContent = 'Invalid email or password.';
+    } else {
+      showToast(apiErrorMessage(err));
+    }
+  }
+  return false;
+}
+
+async function handleSignup(e){
+  e.preventDefault();
+  const name = document.getElementById('suName').value.trim();
+  const company = document.getElementById('suCompany').value.trim();
+  const email = document.getElementById('suEmail').value.trim();
+  const pass = document.getElementById('suPassword').value;
+  const confirm = document.getElementById('suConfirm').value;
+  const terms = document.getElementById('suTerms').checked;
+  let valid = true;
+  if(!name){ setFieldError('suName','suNameErr', true); valid = false; } else { setFieldError('suName','suNameErr', false); }
+  if(!company){ setFieldError('suCompany','suCompanyErr', true); valid = false; } else { setFieldError('suCompany','suCompanyErr', false); }
+  if(!isValidEmail(email)){ setFieldError('suEmail','suEmailErr', true); valid = false; } else { setFieldError('suEmail','suEmailErr', false); }
+  if(pass.length < 8){ setFieldError('suPassword','suPasswordErr', true); valid = false; } else { setFieldError('suPassword','suPasswordErr', false); }
+  if(confirm !== pass || !confirm){ setFieldError('suConfirm','suConfirmErr', true); valid = false; } else { setFieldError('suConfirm','suConfirmErr', false); }
+  if(!terms){ setFieldError('suTerms','suTermsErr', true); valid = false; } else { setFieldError('suTerms','suTermsErr', false); }
+  if(!valid) return false;
+  const btn = document.getElementById('signupBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Creating account…';
+  try {
+    const { merchant, token } = await API.auth.register({
+      name, email, password: pass, confirmPassword: confirm, businessName: company,
+    });
+    setFileAccessToken(token);
+    currentUser = merchant;
+    document.getElementById('signupFormWrap').style.display = 'none';
+    document.getElementById('signupSuccessWrap').style.display = 'block';
+    setTimeout(()=>{ go('dashboard'); }, 1100);
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Create account';
+    if (err instanceof ApiClientError && err.code === 'CONFLICT') {
+      setFieldError('suEmail','suEmailErr', true);
+      document.getElementById('suEmailErr').textContent = 'An account with this email already exists.';
+    } else if (err instanceof ApiClientError && err.code === 'UNPROCESSABLE' && err.details) {
+      Object.entries(err.details).forEach(([field, msg]) => {
+        const map = { name:'suName', email:'suEmail', password:'suPassword', confirmPassword:'suConfirm' };
+        const id = map[field];
+        if (id) { setFieldError(id, id+'Err', true); document.getElementById(id+'Err').textContent = msg; }
+      });
+    } else {
+      showToast(apiErrorMessage(err));
+    }
+  }
+  return false;
+}
+
+async function handleLogout(){
+  try { await API.auth.logout(); } catch (_) { /* clear client state regardless */ }
+  setFileAccessToken(null);
+  currentUser = null;
+  showToast('Logged out.');
+  _renderPage('landing');
+}
+
+/* ============================================================
+   DASHBOARD — real data
+   ============================================================ */
+async function loadDashboardPage(){
+  document.getElementById('dashboardError').style.display = 'none';
+  applySessionToChrome();
+  try {
+    const [overview, activity, trends] = await Promise.all([
+      API.dashboard.overview(),
+      API.dashboard.recoveryActivity(8),
+      API.dashboard.revenueTrends(7),
+    ]);
+    renderDashboardKpis(overview);
+    renderDashboardActivity(activity);
+    renderRevenueChart(trends);
+  } catch (err) {
+    document.getElementById('dashboardError').style.display = 'flex';
+    document.getElementById('dashboardErrorMsg').textContent = apiErrorMessage(err);
+  }
+}
+
+function renderDashboardKpis(o){
+  const set = (id, val) => { const el = document.getElementById(id); if (el) { el.textContent = val; el.classList.remove('kpi-skel'); } };
+  set('kpiAtRisk', formatINR(o.revenueAtRisk));
+  set('kpiRecovered', formatINR(o.recoveredRevenue));
+  set('kpiIncremental', formatINR(o.incrementalRevenue));
+  set('kpiRecoveryRate', formatPct(o.recoveryRate));
+  document.getElementById('kpiAtRiskDelta').textContent = `${o.transactionsAnalyzed} transactions analyzed`;
+  document.getElementById('kpiRecoveredDelta').textContent = `${o.transactionsRecovered} recovered`;
+  document.getElementById('kpiRateDelta').textContent = `${o.pendingApproval} pending approval`;
+}
+
+function renderDashboardActivity(items){
+  const feedList = document.getElementById('feedList');
+  if (!feedList) return;
+  if (!items || !items.length) { feedList.innerHTML = '<div class="api-empty">No recovery activity yet — run a recovery from the Recovery Center or generate demo data.</div>'; return; }
+  const statusColor = { recovered:'var(--sage)', failed:'var(--wine)', unrecoverable:'var(--wine)', stopped:'var(--ink-soft)', recovering:'var(--amber)' };
+  feedList.innerHTML = items.map(t => {
+    const color = statusColor[t.status] || 'var(--ink-soft)';
+    const title = t.status === 'recovered'
+      ? `${humanize(t.selectedStrategy || 'Recovery')} recovered ${formatINR(t.amount)}`
+      : `${t.transactionId} — ${humanize(t.recoveryStatus || t.status)}`;
+    return `<div class="feed-item"><span class="feed-dot" style="background:${color};"></span><div><b>${title}</b><span>${t.transactionId} · ${t.failureReason || ''}</span></div><span class="feed-time">${timeAgo(t.updatedAt)}</span></div>`;
+  }).join('');
+}
+
+function renderRevenueChart(trends){
+  const line = document.getElementById('chartLine');
+  if (!line || !trends || !trends.length) return;
+  const max = Math.max(1, ...trends.map(t => t.atRisk || 0));
+  const w = 560, h = 200, stepX = trends.length > 1 ? w / (trends.length - 1) : w;
+  const points = trends.map((t, i) => {
+    const x = Math.round(i * stepX);
+    const y = Math.round(h - 20 - ((t.recovered || 0) / max) * (h - 40));
+    return `${x},${y}`;
+  });
+  line.setAttribute('points', points.join(' '));
+  const poly = line.nextElementSibling;
+  if (poly) poly.setAttribute('points', points.join(' ') + ` ${w},${h} 0,${h}`);
+  const dotsG = line.parentElement.querySelector('g');
+  if (dotsG) {
+    dotsG.innerHTML = points.map(p => { const [x,y] = p.split(','); return `<circle cx="${x}" cy="${y}" r="3.5"/>`; }).join('');
+  }
+}
+
+/* ============================================================
+   TRANSACTIONS — Revenue Leaks page
+   ============================================================ */
+let txnState = { page: 1, status: '', search: '', totalPages: 1 };
+let txnSearchDebounce;
+function debouncedTxnSearch(){
+  clearTimeout(txnSearchDebounce);
+  txnSearchDebounce = setTimeout(() => {
+    txnState.search = document.getElementById('txnSearch').value.trim();
+    txnState.page = 1;
+    loadTransactions();
+  }, 350);
+}
+function loadLeaksPage(){
+  txnState = { page: 1, status: '', search: '', totalPages: 1 };
+  document.querySelectorAll('#txnFilters .filter-chip').forEach(c => c.classList.toggle('active', c.dataset.status === ''));
+  const search = document.getElementById('txnSearch'); if (search) search.value = '';
+  loadTransactions();
+}
+document.addEventListener('click', (e) => {
+  const chip = e.target.closest && e.target.closest('.filter-chip');
+  if (chip && chip.closest('#txnFilters')) {
+    document.querySelectorAll('#txnFilters .filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    txnState.status = chip.dataset.status;
+    txnState.page = 1;
+    loadTransactions();
+  }
+});
+async function loadTransactions(){
+  const stateEl = document.getElementById('txnTableState');
+  const table = document.getElementById('txnTable');
+  const pagination = document.getElementById('txnPagination');
+  stateEl.innerHTML = '<div class="api-loading"><span class="spinner"></span> Loading transactions…</div>';
+  table.style.display = 'none';
+  pagination.style.display = 'none';
+  try {
+    const params = { page: txnState.page, limit: 8 };
+    if (txnState.status) params.status = txnState.status;
+    if (txnState.search) params.search = txnState.search;
+    const items = await apiFetchWithMeta('/transactions?' + new URLSearchParams(params).toString());
+    if (!items.data.length) {
+      stateEl.innerHTML = '<div class="api-empty">No transactions match this filter.</div>';
+      return;
+    }
+    stateEl.innerHTML = '';
+    table.style.display = '';
+    renderTxnTable(items.data);
+    txnState.totalPages = items.meta?.totalPages || 1;
+    renderTxnPagination();
+    pagination.style.display = 'flex';
+  } catch (err) {
+    stateEl.innerHTML = `<div class="api-error"><span>${apiErrorMessage(err)}</span><button onclick="loadTransactions()">Retry</button></div>`;
+  }
+}
+function renderTxnTable(rows){
+  const body = document.getElementById('txnTableBody');
+  body.innerHTML = rows.map(t => `
+    <tr class="txn-row" onclick="openTransactionDrawer('${t.transactionId}')">
+      <td class="mono">${t.transactionId}</td>
+      <td class="mono">${formatINR(t.amount)}</td>
+      <td>${t.failureReason || '—'}</td>
+      <td>${t.selectedStrategy ? humanize(t.selectedStrategy) : '—'}</td>
+      <td class="mono">${t.recoveryProbability != null ? Math.round(t.recoveryProbability*100)+'%' : '—'}</td>
+      <td><span class="status-badge ${t.status}">${humanize(t.status)}</span></td>
+    </tr>`).join('');
+}
+function renderTxnPagination(){
+  const el = document.getElementById('txnPagination');
+  el.innerHTML = `
+    <button ${txnState.page<=1?'disabled':''} onclick="changeTxnPage(-1)">← Prev</button>
+    <span>Page ${txnState.page} of ${txnState.totalPages}</span>
+    <button ${txnState.page>=txnState.totalPages?'disabled':''} onclick="changeTxnPage(1)">Next →</button>`;
+}
+function changeTxnPage(delta){ txnState.page += delta; loadTransactions(); }
+
+/** Needed because apiFetch() normally discards the `meta` envelope (pagination info). */
+async function apiFetchWithMeta(path, options = {}) {
+  let res;
+  try {
+    res = await fetch(API_BASE_URL + path, { credentials: 'include', headers: apiHeaders(options.headers), ...options });
+  } catch (_) {
+    throw new ApiClientError('Cannot reach the RecoverAI backend. Is it running at ' + API_BASE_URL + '?', 'NETWORK_ERROR', 0);
+  }
+  const json = await res.json();
+  if (!res.ok || !json.success) throw new ApiClientError(json.error?.message || 'Request failed', json.error?.code, res.status);
+  return { data: json.data, meta: json.meta };
+}
+
+/* ---------- transaction detail drawer ---------- */
+async function openTransactionDrawer(id){
+  const content = document.getElementById('drawerContent');
+  content.innerHTML = '<div class="api-loading"><span class="spinner"></span> Loading transaction…</div>';
+  document.getElementById('drawer').classList.add('show');
+  document.getElementById('drawerOverlay').classList.add('show');
+  try {
+    const [txn, timeline] = await Promise.all([API.transactions.get(id), API.transactions.timeline(id)]);
+    content.innerHTML = `
+      <div class="txn-eyebrow" style="margin-top:4px; font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em;">${txn.transactionId}</div>
+      <h3>${formatINR(txn.amount)}</h3>
+      <div class="drawer-sub"><span class="status-badge ${txn.status}">${humanize(txn.status)}</span></div>
+      <div class="receipt glass-strong" style="padding:16px; margin-top:8px;">
+        <div class="receipt-row"><span>Failure reason</span><span>${txn.failureReason || '—'}</span></div>
+        <div class="receipt-row"><span>Recovery probability</span><span>${txn.recoveryProbability != null ? Math.round(txn.recoveryProbability*100)+'%' : '—'}</span></div>
+        <div class="receipt-row"><span>Strategy</span><span>${txn.selectedStrategy ? humanize(txn.selectedStrategy) : '—'}</span></div>
+        <div class="receipt-row"><span>Guardrail</span><span>${txn.guardrailResult?.blocked ? 'Blocked' : txn.guardrailResult?.requiresApproval ? 'Requires approval' : txn.guardrailResult?.allowed ? 'Passed' : '—'}</span></div>
+        <div class="receipt-row"><span>Recovered amount</span><span>${txn.actualRecoveredAmount ? formatINR(txn.actualRecoveredAmount) : '—'}</span></div>
+      </div>
+      ${txn.stoppedReason ? `<div class="receipt-why" style="margin-top:14px;"><b style="color:var(--charcoal);">Stopping reason</b><br>${txn.stoppedReason}</div>` : ''}
+      ${txn.selectionReason ? `<div class="receipt-why" style="margin-top:14px;"><b style="color:var(--charcoal);">Why this strategy?</b><br>${txn.selectionReason}</div>` : ''}
+      <div class="drawer-section-title">Recovery timeline</div>
+      <div class="timeline">${timeline.length ? timeline.map(s => `<div class="t-step show"><div class="t-time">${new Date(s.timestamp).toLocaleTimeString()}</div><div class="t-title">${s.step}: ${s.message}</div></div>`).join('') : '<div class="api-empty">No decisions recorded yet — run AI analysis from the Recovery Center.</div>'}</div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center; margin-top:16px;" onclick="closeDrawer(); openRecoveryFor('${txn.transactionId}');">Investigate in Recovery Center →</button>
+    `;
+  } catch (err) {
+    content.innerHTML = `<div class="api-error"><span>${apiErrorMessage(err)}</span><button onclick="openTransactionDrawer('${id}')">Retry</button></div>`;
+  }
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('show');
+  document.getElementById('drawerOverlay').classList.remove('show');
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+</script>
+</body>
+</html>
